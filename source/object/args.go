@@ -1,0 +1,21 @@
+package object
+
+import "github.com/vandi37/aqua/pkg/scope"
+
+func ParseArgs(args Arguments, vals []*Value, scope *scope.Scope[*Value]) {
+	*scope = scope.Push()
+	for i, arg := range args.Elements {
+		var val *Value
+		if i >= len(vals) {
+			val = arg.Default
+		} else {
+			val = vals[i]
+		}
+		scope.Set(arg.Name, val)
+	}
+
+	if args.Last != nil && len(vals) > len(args.Elements) {
+		left := vals[len(args.Elements):]
+		scope.Set(*args.Last, &Value{Array{Elements: left}})
+	}
+}

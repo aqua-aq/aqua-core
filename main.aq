@@ -1,0 +1,338 @@
+# comments
+
+#-
+multi line comments
+-#
+
+let a = 10 # declaring
+a = 20 # assigment
+
+let int = 10
+let float = 10.5
+let string = "hello"
+let bool = true
+let null_value = null
+
+# operators
+a = 10 + 20 # addition
+a = 10 - 20 # subtraction
+a = 10 * 20 # multiplication
+a = 10 / 20 # division
+a = 10 % 20 # modulus
+a = 10 // 20 # division integer
+a++ # increment
+a-- # decrement
+
+# bin operators
+a = 10 and 20 # and
+a = 10 or 20 # or
+a = 10 xor 20 # xor
+a = not 10 # not
+a = 10 << 20 # left shift
+a = 10 >> 20 # right shift
+
+# bool operations
+a = true and false
+a = true or false
+a = not true
+
+# comparing
+
+a = 10 == 10 # equal
+a = 10 ~= 10 # not equal
+a = 10 > 10 # greater than
+a = 10 < 10 # less than
+a = 10 >= 10 # greater than or equal
+a = 10 <= 10 # less than or equal
+
+# assigment operations
+a += 10
+a -= 10
+# and so on
+
+# code blocks
+
+a = 20
+begin 
+    let a = 10
+end
+# a is 20
+
+a = 30
+begin 
+    a++
+end
+# a is 31
+
+a = begin
+    let b = 10
+    b + 37
+end # a = 47
+
+# arrays
+
+# simple
+let a = [10, "Hello", true, null] # creating an array
+a[1] = "World" # changing an array value
+a = a + 10 # adding an element to an array
+a = a-- # removing an element from the array
+
+# slicing
+let slice = a[1..]
+slice = a[..2]
+slice = a[1..2] # getting a slice of an array
+slice = a[..] # copying an array
+
+# opening arrays
+let b = [...a, 1, 2, 3, 4, 5] # adding all elements of a to b
+let c = [...a, ...b] # adding all elements of a and b to c
+a = [...a, ...b] # adding all elements of b to a
+a = [10, true]
+
+# unpacking
+let n, let ok = a # unpacking  array
+
+# comparing
+a = 10 in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] # true
+a = 10 in 0..9 # false
+
+# objects
+
+# simple 
+a = {
+    name: "Alice", 
+    age: 10, 
+    isStudent: true
+} # creating an object
+
+a.name = "Bob" # changing an object property or adding a new one
+
+# using any strings as keys
+a.`any` string = 10 # adding a new no name control property
+
+b = {
+    birthday: "may 3", 
+    ...a, # adding all properties of a to b
+}
+
+let name = "alice"
+let people = {
+    @name {
+        age: 10
+    }
+    peter: {
+        age: 14
+    }
+}
+name = "sam"
+people.@sam = {age: 28}
+
+# conditions
+
+if a == 10 
+    a += 10
+end
+
+if a == 10
+    a += 10
+else 
+    a -= 10
+end
+
+if a == 10
+    a += 10
+elif a == 5 
+    a += 5
+else 
+    a -= 10
+end;
+
+# one line
+
+a = if a == 10 "ten" else "unknown" end
+
+# loops
+
+# for in loop
+
+a = 0
+for i in 0..10
+    a += i
+end
+
+a = ""
+for i in ["Hello", "World"]
+    a += i
+end
+
+count = 0
+s = ""
+for i, c in enum ["a", "b", "c", "d"]
+    count += i
+    s += c
+end
+
+# for in with objects
+
+count = 0
+for k, v in {
+    peter: 10
+    alice: 17
+    heinz: 39
+    robert: 20
+}
+    if v >= 18 count++ end
+end
+
+keys = ""
+for k in keys {a: 10, b: null}
+    keys += k
+end
+
+sum = 0
+for v in values {a: 10, b: 37}
+    sum += values
+end
+
+# while loop 
+
+a = 0
+while a < 10 
+    a ++
+end
+
+a = 0
+i = 0
+while i < 10 : i ++ # here it does it after each iteration 
+    a += i
+end
+
+# repeat-until loop
+
+a = 0
+repeat 
+    a += 1
+until a >= 10
+
+a = 0
+i = 0
+repeat 
+    a += i
+until i >= 10 : i ++ # here it does it after each iteration
+
+# break/continue
+for i in 0..10
+    if i == 5 break end
+end
+
+a = 0
+for i in 0..10
+    if i == 5 continue end
+    a += 1
+end
+
+# returning values from loops
+
+a = 10
+a = while a < 100 : a ++
+    if a % 10 == 3 break a * 10 
+    elif a / 2 > 37 break a * 3 end
+end # if finishes without breaking a will be null
+
+a = while a < 100 : a ++
+    if a == 37 break true
+else
+    false
+end
+a = 10
+a = repeat
+    if a < 10 break true end
+else 
+    false
+until a >= 20 : a ++
+
+# subroutines
+
+sub add(a, b) return a + b end
+a = add(10, 20)
+
+sub map(s) 
+    for v in it
+        it[v] = p(s)
+    end
+    return it
+end
+
+a = [1, 2, 3, 4, 5]->map((v) => v * 2) # binding it
+
+sub push(array, values...)
+    return array + values
+end
+
+a = push([1, 2, 4, 5, 5, 6], 2)
+a = push(a, a...)
+
+# more closures
+
+a = 10
+b = (v) => a + v
+a = b(20) # 30
+a = b(10) # 40
+
+a = sub (array, p)
+    for v in array
+        array[v] = p(v)
+    end
+    return array
+end
+
+b = [1, 2, 3, 4, 5]
+a(b, (v) => v * 2) # [2, 4, 6, 8, 10]
+
+# constructors
+sub Person(name, age)
+    it.name = name
+    it.age = age
+end
+
+a = new Person("Alice", 10)
+
+sub Person(name, age)
+    it.name = name
+    if age != null then it.age = age end
+with {
+    age: 10, # default
+    sub greet() return "Hello, My name is @{it.name}" end
+}
+
+
+a = new Person("Alice")
+a.greet() # Hello, My name is Alice
+
+# exceptions
+
+sub divide(a, b) 
+    if a == 0 then throw "Cannot divide by zero" end
+    return a / b
+end
+
+a = divide(1, 0) catch e then infinity end # infinity
+# if we do not catch exception, it will be thrown to the top level
+
+# references
+
+a = 10
+sub inc(a) a += 1 end
+inc(a) # a == 10
+inc(&a) # a == 11
+
+# modules 
+
+Math = {
+    sub add(a, b) 
+        return a + b
+    end
+}
+
+a = Math.add(10, 20) # 30
+# modules are just global objects 
