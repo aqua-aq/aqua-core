@@ -1,6 +1,7 @@
 package ast
 
 import (
+	"github.com/vandi37/aqua/source/errors"
 	"github.com/vandi37/aqua/source/operators"
 	"github.com/vandi37/aqua/source/signal"
 )
@@ -30,6 +31,7 @@ type (
 	NumDec    float64
 	StringDec string
 	NullDec   struct{}
+	ErrorDec  errors.Error
 	ArrayDec  struct {
 		Elements []struct {
 			Value       Expression
@@ -101,6 +103,7 @@ func (IntDec) expression()           {}
 func (NumDec) expression()           {}
 func (NullDec) expression()          {}
 func (StringDec) expression()        {}
+func (ErrorDec) expression()         {}
 func (ArrayDec) expression()         {}
 func (BinExpression) expression()    {}
 func (PrefixExpression) expression() {}

@@ -3,7 +3,7 @@ package errors
 import "fmt"
 
 type Error struct {
-	Code
+	Code    Code
 	Message string
 }
 
@@ -13,10 +13,8 @@ const (
 	UnknownError Code = iota
 	TypeError
 	ValueError
-	StackUnderflow
-	NullPointer
-	InvalidSubroutine
 	InvalidSignal
+	IteratorStop
 )
 
 func (c Code) Error() string {
@@ -29,6 +27,8 @@ func (c Code) Error() string {
 		return "value error"
 	case InvalidSignal:
 		return "invalid signal"
+	case IteratorStop:
+		return "iterator stop"
 	default:
 		return "unknown error"
 	}

@@ -7,7 +7,7 @@ func ParseArgs(args Arguments, vals []*Value, scope *scope.Scope[*Value]) {
 	for i, arg := range args.Elements {
 		var val *Value
 		if i >= len(vals) {
-			val = arg.Default
+			val = arg.Default.Normalize()
 		} else {
 			val = vals[i]
 		}

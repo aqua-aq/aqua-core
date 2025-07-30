@@ -12,7 +12,7 @@ import (
 )
 
 type Eval interface {
-	Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult
+	Eval(vm *vm.VM, scope scope.Scope[*object.Value]) object.ExpressionResult
 }
 
 func IntoEval(expr ast.Expression) Eval {
@@ -27,6 +27,8 @@ func IntoEval(expr ast.Expression) Eval {
 		return StringDec(val)
 	case ast.NullDec:
 		return NullDec(val)
+	case ast.ErrorDec:
+		return ErrorDec(val)
 	case ast.ArrayDec:
 		return ArrayDec(val)
 	case ast.BinExpression:
@@ -48,7 +50,7 @@ func IntoEval(expr ast.Expression) Eval {
 	case ast.SignalExpression:
 		return SignalExpression(val)
 	default:
-		return nil
+		return NullDec{}
 	}
 }
 
@@ -58,6 +60,7 @@ type (
 	NumDec           ast.NumDec
 	StringDec        ast.StringDec
 	NullDec          ast.NullDec
+	ErrorDec         ast.ErrorDec
 	ArrayDec         ast.ArrayDec
 	BinExpression    ast.BinExpression
 	PrefixExpression ast.PrefixExpression
@@ -70,88 +73,116 @@ type (
 	SignalExpression ast.SignalExpression
 )
 
-// Eval implements Eval.
-func (s SignalExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
+func (e ErrorDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value]) object.ExpressionResult {
+	return object.ExpressionResult{
+		Value: &object.Value{InnerValue: object.Error(e)},
+	}
+}
+
+func (s SignalExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value]) object.ExpressionResult {
+	res := IntoEval(s.SigVal).Eval(vm, scope)
+	if res.Signal.Has() {
+		return res
+	}
+	return object.ExpressionResult{
+		Signal:    s.Signal,
+		SignalVal: res.Value,
+	}
+}
+
+func (s SubroutineDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value]) object.ExpressionResult {
 	panic("unimplemented")
 }
 
-// expression implements Eval.
-// Subtle: this method shadows the method (SignalExpression).expression of SignalExpression.SignalExpression.
-func (s SignalExpression) expression() {
+func (w WhileExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value]) object.ExpressionResult {
+	res := &object.Value{InnerValue: object.Null{}}
+	var hasBreak bool
+	if w.IsWhile {
+		for {
+			cond := IntoEval(w.Condition).Eval(vm, scope)
+			if cond.Signal.Has() {
+				return cond
+			}
+			ok, sig := IntoBool(cond.Value.Normalize())
+			if sig.Signal.Has() {
+				return sig
+			}
+			if ok {
+				break
+			}
+			block := BlockExpression(w.Block).Eval(vm, scope)
+			if block.Signal == signal.SignalContinue {
+				res = block.SignalVal.Normalize()
+				continue
+			}
+			if block.Signal == signal.SignalBreak {
+				res = block.SignalVal.Normalize()
+				hasBreak = true
+				break
+			}
+			if block.Signal.Has() {
+				return block
+			}
+			res = block.Value.Normalize()
+		}
+	} else {
+		for {
+			block := BlockExpression(w.Block).Eval(vm, scope)
+			if block.Signal == signal.SignalContinue {
+				res = block.SignalVal.Normalize()
+				continue
+			}
+			if block.Signal == signal.SignalBreak {
+				res = block.SignalVal.Normalize()
+				hasBreak = true
+				break
+			}
+			if block.Signal.Has() {
+				return block
+			}
+			res = block.Value.Normalize()
+			cond := IntoEval(w.Condition).Eval(vm, scope)
+			if cond.Signal.Has() {
+				return cond
+			}
+			ok, sig := IntoBool(cond.Value.Normalize())
+			if sig.Signal.Has() {
+				return sig
+			}
+			if !ok {
+				break
+			}
+		}
+
+	}
+	if !hasBreak && w.Else != nil {
+		return BlockExpression(*w.Else).Eval(vm, scope)
+	}
+	return object.ExpressionResult{
+		Value: res.Normalize(),
+	}
+}
+
+func (f ForExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value]) object.ExpressionResult {
+}
+
+func (i IfExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value]) object.ExpressionResult {
 	panic("unimplemented")
 }
 
-// Eval implements Eval.
-func (s SubroutineDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
+func (p PrefixExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value]) object.ExpressionResult {
 	panic("unimplemented")
 }
 
-// expression implements Eval.
-// Subtle: this method shadows the method (SubroutineDec).expression of SubroutineDec.SubroutineDec.
-func (s SubroutineDec) expression() {
+func (b BinExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value]) object.ExpressionResult {
 	panic("unimplemented")
 }
 
-// Eval implements Eval.
-func (w WhileExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
-	panic("unimplemented")
-}
-
-// expression implements Eval.
-// Subtle: this method shadows the method (WhileExpression).expression of WhileExpression.WhileExpression.
-func (w WhileExpression) expression() {
-	panic("unimplemented")
-}
-
-// Eval implements Eval.
-func (f ForExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
-	panic("unimplemented")
-}
-
-// expression implements Eval.
-// Subtle: this method shadows the method (ForExpression).expression of ForExpression.ForExpression.
-func (f ForExpression) expression() {
-	panic("unimplemented")
-}
-
-// Eval implements Eval.
-func (i IfExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
-	panic("unimplemented")
-}
-
-// expression implements Eval.
-// Subtle: this method shadows the method (IfExpression).expression of IfExpression.IfExpression.
-func (i IfExpression) expression() {
-	panic("unimplemented")
-}
-
-// Eval implements Eval.
-func (p PrefixExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
-	panic("unimplemented")
-}
-
-// expression implements Eval.
-// Subtle: this method shadows the method (PrefixExpression).expression of PrefixExpression.PrefixExpression.
-func (p PrefixExpression) expression() {
-	panic("unimplemented")
-}
-
-// Eval implements Eval.
-func (b BinExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
-	panic("unimplemented")
-}
-
-// expression implements Eval.
-// Subtle: this method shadows the method (BinExpression).expression of BinExpression.BinExpression.
-func (b BinExpression) expression() {
-	panic("unimplemented")
-}
-
-func (o ObjectDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
+func (o ObjectDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value]) object.ExpressionResult {
 	obj := make(map[string]*object.Value)
 	for _, val := range o.Vals {
 		if val.IsContinuos {
-			res := IntoEval(val.Value).Eval(vm, scope, true)
+			res := IntoEval(val.Value).Eval(vm, scope)
 			if res.Signal.Has() {
 				return res
 			}
@@ -169,7 +200,7 @@ func (o ObjectDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool)
 				obj[k] = v
 			}
 		}
-		res := IntoEval(val.Value).Eval(vm, scope, true)
+		res := IntoEval(val.Value).Eval(vm, scope)
 		if res.Signal.Has() {
 			return res
 		}
@@ -182,33 +213,33 @@ func (o ObjectDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool)
 	}
 }
 
-func (i IntDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
+func (i IntDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value]) object.ExpressionResult {
 	return object.ExpressionResult{
 		Value: &object.Value{InnerValue: object.Int{Value: int(i)}},
 	}
 }
 
-func (n NumDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
+func (n NumDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value]) object.ExpressionResult {
 	return object.ExpressionResult{
 		Value: &object.Value{InnerValue: object.Number{Value: float64(n)}},
 	}
 }
-func (s StringDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
+func (s StringDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value]) object.ExpressionResult {
 	return object.ExpressionResult{
 		Value: &object.Value{InnerValue: object.String{Value: string(s)}},
 	}
 }
-func (n NullDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
+func (n NullDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value]) object.ExpressionResult {
 	return object.ExpressionResult{
 		Value: &object.Value{InnerValue: object.Null{}},
 	}
 }
 
-func (a ArrayDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
+func (a ArrayDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value]) object.ExpressionResult {
 	var arr []*object.Value
 	for _, val := range a.Elements {
 		if val.IsContinuos {
-			res := IntoEval(val.Value).Eval(vm, scope, true)
+			res := IntoEval(val.Value).Eval(vm, scope)
 			if res.Signal.Has() {
 				return res
 			}
@@ -224,7 +255,7 @@ func (a ArrayDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) 
 			}
 			arr = append(arr, inner.Elements...)
 		}
-		res := IntoEval(val.Value).Eval(vm, scope, true)
+		res := IntoEval(val.Value).Eval(vm, scope)
 		if res.Signal.Has() {
 			return res
 		}
@@ -235,7 +266,7 @@ func (a ArrayDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) 
 	}
 }
 
-func (l LetExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
+func (l LetExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value]) object.ExpressionResult {
 	val := &object.Value{InnerValue: object.Null{}}
 	scope.Set(l.Name, val)
 	return object.ExpressionResult{
@@ -243,14 +274,14 @@ func (l LetExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone b
 	}
 }
 
-func (b BlockExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
+func (b BlockExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value]) object.ExpressionResult {
 	scope = scope.Push()
 	for i, expr := range b.Expressions {
-		res := IntoEval(expr).Eval(vm, scope, false)
+		res := IntoEval(expr).Eval(vm, scope)
 		if res.Signal == signal.SignalRaise && b.Catch != nil {
 			scope = scope.Rebase()
 			scope.Set(b.Catch.Name, res.SignalVal)
-			res = BlockExpression(b.Catch.Expressions).Eval(vm, scope, clone)
+			res = BlockExpression(b.Catch.Expressions).Eval(vm, scope)
 			return res
 		}
 		if res.Signal.Has() {
