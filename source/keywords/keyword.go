@@ -1,5 +1,6 @@
 package keywords
 
 const (
-	It = "it"
+	It   = "it"
+	Iter = "iter"
 )
