@@ -31,10 +31,14 @@ func IntoEval(expr ast.Expression) Eval {
 		return ErrorDec(val)
 	case ast.ArrayDec:
 		return ArrayDec(val)
+	case ast.SubroutineDec:
+		return SubroutineDec(val)
 	case ast.BinExpression:
 		return BinExpression(val)
 	case ast.PrefixExpression:
 		return PrefixExpression(val)
+	case ast.CalLExpression:
+		return CalLExpression(val)
 	case ast.LetExpression:
 		return LetExpression(val)
 	case ast.BlockExpression:
@@ -45,8 +49,8 @@ func IntoEval(expr ast.Expression) Eval {
 		return ForExpression(val)
 	case ast.WhileExpression:
 		return WhileExpression(val)
-	case ast.SubroutineDec:
-		return SubroutineDec(val)
+	case ast.GlobalSubroutineDec:
+		return GlobalSubroutineDec(val)
 	case ast.SignalExpression:
 		return SignalExpression(val)
 	default:
@@ -55,27 +59,56 @@ func IntoEval(expr ast.Expression) Eval {
 }
 
 type (
-	ObjectDec        ast.ObjectDec
-	IntDec           ast.IntDec
-	NumDec           ast.NumDec
-	StringDec        ast.StringDec
-	NullDec          ast.NullDec
-	ErrorDec         ast.ErrorDec
-	ArrayDec         ast.ArrayDec
-	BinExpression    ast.BinExpression
-	PrefixExpression ast.PrefixExpression
-	LetExpression    ast.LetExpression
-	BlockExpression  ast.BlockExpression
-	IfExpression     ast.IfExpression
-	ForExpression    ast.ForExpression
-	WhileExpression  ast.WhileExpression
-	SubroutineDec    ast.SubroutineDec
-	SignalExpression ast.SignalExpression
+	ObjectDec           ast.ObjectDec
+	IntDec              ast.IntDec
+	NumDec              ast.NumDec
+	StringDec           ast.StringDec
+	NullDec             ast.NullDec
+	ErrorDec            ast.ErrorDec
+	ArrayDec            ast.ArrayDec
+	SubroutineDec       ast.SubroutineDec
+	BinExpression       ast.BinExpression
+	PrefixExpression    ast.PrefixExpression
+	CalLExpression      ast.CalLExpression
+	LetExpression       ast.LetExpression
+	BlockExpression     ast.BlockExpression
+	IfExpression        ast.IfExpression
+	ForExpression       ast.ForExpression
+	WhileExpression     ast.WhileExpression
+	GlobalSubroutineDec ast.GlobalSubroutineDec
+	SignalExpression    ast.SignalExpression
 )
+
+// Eval implements Eval.
+func (c CalLExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value]) object.ExpressionResult {
+	sub := IntoEval(c.Subroutine).Eval(vm, scope)
+	if sub.Signal.Has() {
+		return sub
+	}
+	args := make([]*object.Value, 0, len(c.Args))
+	for _, arg := range c.Args {
+		argRes := IntoEval(arg).Eval(vm, scope)
+		if argRes.Signal.Has() {
+			return argRes
+		}
+		args = append(args, argRes.SignalVal)
+	}
+	return Call(vm, sub.SignalVal, args)
+}
+
+// Eval implements Eval.
+func (g GlobalSubroutineDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value]) object.ExpressionResult {
+	sub := SubroutineDec(g.SubroutineDec).Eval(vm, scope)
+	if sub.Signal.Has() {
+		return sub
+	}
+	scope.Set(g.Name, sub.SignalVal.Normalize())
+	return object.ExpressionResult{}
+}
 
 func (e ErrorDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value]) object.ExpressionResult {
 	return object.ExpressionResult{
-		Value: &object.Value{InnerValue: object.Error(e)},
+		SignalVal: &object.Value{InnerValue: object.Error(e)},
 	}
 }
 
@@ -86,84 +119,76 @@ func (s SignalExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value]) obje
 	}
 	return object.ExpressionResult{
 		Signal:    s.Signal,
-		SignalVal: res.Value,
+		SignalVal: res.SignalVal,
 	}
-}
-
-func (s SubroutineDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value]) object.ExpressionResult {
-	panic("unimplemented")
 }
 
 func (w WhileExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value]) object.ExpressionResult {
-	res := &object.Value{InnerValue: object.Null{}}
-	var hasBreak bool
-	if w.IsWhile {
-		for {
-			cond := IntoEval(w.Condition).Eval(vm, scope)
-			if cond.Signal.Has() {
-				return cond
-			}
-			ok, sig := IntoBool(cond.Value.Normalize())
-			if sig.Signal.Has() {
-				return sig
-			}
-			if ok {
-				break
-			}
-			block := BlockExpression(w.Block).Eval(vm, scope)
-			if block.Signal == signal.SignalContinue {
-				res = block.SignalVal.Normalize()
-				continue
-			}
-			if block.Signal == signal.SignalBreak {
-				res = block.SignalVal.Normalize()
-				hasBreak = true
-				break
-			}
-			if block.Signal.Has() {
-				return block
-			}
-			res = block.Value.Normalize()
-		}
-	} else {
-		for {
-			block := BlockExpression(w.Block).Eval(vm, scope)
-			if block.Signal == signal.SignalContinue {
-				res = block.SignalVal.Normalize()
-				continue
-			}
-			if block.Signal == signal.SignalBreak {
-				res = block.SignalVal.Normalize()
-				hasBreak = true
-				break
-			}
-			if block.Signal.Has() {
-				return block
-			}
-			res = block.Value.Normalize()
-			cond := IntoEval(w.Condition).Eval(vm, scope)
-			if cond.Signal.Has() {
-				return cond
-			}
-			ok, sig := IntoBool(cond.Value.Normalize())
-			if sig.Signal.Has() {
-				return sig
-			}
-			if !ok {
-				break
-			}
-		}
+	var (
+		result   *object.Value
+		hasBreak bool
+		expr     object.ExpressionResult
+		ok       bool
+	)
 
+start:
+	if w.IsWhile {
+		goto condition
+	} else {
+		goto block
 	}
+condition:
+	expr = IntoEval(w.Condition).Eval(vm, scope)
+	if expr.Signal == signal.SignalRaise && w.Catch != nil {
+		goto catch
+	}
+	if expr.Signal.Has() {
+		return expr
+	}
+
+	ok, expr = IntoBool(vm, expr.SignalVal.Normalize())
+	if expr.Signal == signal.SignalRaise && w.Catch != nil {
+		goto catch
+	}
+	if expr.Signal.Has() {
+		return expr
+	}
+	if (w.IsWhile && !ok) || (!w.IsWhile && ok) {
+		goto after
+	}
+block:
+	expr = BlockExpression(w.Block).Eval(vm, scope)
+	switch {
+	case expr.Signal == signal.SignalRaise && w.Catch != nil:
+		goto catch
+	case expr.Signal == signal.SignalContinue:
+		result = expr.SignalVal.Normalize()
+		goto start
+	case expr.Signal == signal.SignalBreak:
+		result = expr.SignalVal.Normalize()
+		hasBreak = true
+		goto after
+	case expr.Signal.Has():
+		return expr
+	default:
+		result = expr.SignalVal.Normalize()
+	}
+
+	goto condition
+
+after:
 	if !hasBreak && w.Else != nil {
 		return BlockExpression(*w.Else).Eval(vm, scope)
 	}
-	return object.ExpressionResult{
-		Value: res.Normalize(),
-	}
+	return object.ExpressionResult{SignalVal: result.Normalize()}
+catch:
+	scope = scope.Rebase()
+	scope.Set(w.Catch.Name, expr.SignalVal.Normalize())
+	return BlockExpression(w.Catch.Expressions).Eval(vm, scope)
 }
 
 func (f ForExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value]) object.ExpressionResult {
+	panic("unimplemented")
 }
 
 func (i IfExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value]) object.ExpressionResult {
@@ -179,20 +204,31 @@ func (b BinExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value]) object.
 }
 
 func (o ObjectDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value]) object.ExpressionResult {
+	obj, res := createMap(vm, scope, o)
+	if res.Signal.Has() {
+		return res
+	}
+	return object.ExpressionResult{
+		SignalVal: &object.Value{InnerValue: object.Object{
+			Map: obj,
+		}},
+	}
+}
+func createMap(vm *vm.VM, scope scope.Scope[*object.Value], o ObjectDec) (map[string]*object.Value, object.ExpressionResult) {
 	obj := make(map[string]*object.Value)
 	for _, val := range o.Vals {
 		if val.IsContinuos {
 			res := IntoEval(val.Value).Eval(vm, scope)
 			if res.Signal.Has() {
-				return res
+				return nil, res
 			}
-			inner, ok := res.Value.InnerValue.(object.Object)
+			inner, ok := res.SignalVal.InnerValue.(object.Object)
 			if !ok {
-				return object.ExpressionResult{
+				return nil, object.ExpressionResult{
 					Signal: signal.SignalRaise,
 					SignalVal: &object.Value{InnerValue: object.Error{
 						Code:    errors.TypeError,
-						Message: fmt.Sprintf("expected object, got %v", res.Value.Normalize().Type()),
+						Message: fmt.Sprintf("expected object, got %v", res.SignalVal.Normalize().Type()),
 					}},
 				}
 			}
@@ -202,36 +238,59 @@ func (o ObjectDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value]) object.Expr
 		}
 		res := IntoEval(val.Value).Eval(vm, scope)
 		if res.Signal.Has() {
+			return nil, res
+		}
+		obj[val.Name] = res.SignalVal.Normalize()
+	}
+	return obj, object.ExpressionResult{}
+}
+func (s SubroutineDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value]) object.ExpressionResult {
+	arguments := object.Arguments{Last: s.Arguments.Last}
+	for _, arg := range s.Arguments.Elements {
+		res := IntoEval(arg.Default).Eval(vm, scope)
+		if res.Signal.Has() {
 			return res
 		}
-		obj[val.Name] = res.Value.Normalize()
+		arguments.Elements = append(arguments.Elements, object.Argument{
+			Name:    arg.Name,
+			Default: res.SignalVal.Normalize(),
+		})
+	}
+	obj, res := createMap(vm, scope, ObjectDec(s.Prototype))
+	if res.Signal.Has() {
+		return res
 	}
 	return object.ExpressionResult{
-		Value: &object.Value{InnerValue: object.Object{
-			Map: obj,
-		}},
+		SignalVal: &object.Value{
+			InnerValue: &object.Subroutine{
+				Arguments: arguments,
+				Scope:     scope,
+				Prototype: obj,
+				Code:      s.Body,
+			},
+		},
 	}
 }
 
 func (i IntDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value]) object.ExpressionResult {
 	return object.ExpressionResult{
-		Value: &object.Value{InnerValue: object.Int{Value: int(i)}},
+		SignalVal: &object.Value{InnerValue: object.Int{Value: int(i)}},
 	}
 }
 
 func (n NumDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value]) object.ExpressionResult {
 	return object.ExpressionResult{
-		Value: &object.Value{InnerValue: object.Number{Value: float64(n)}},
+		SignalVal: &object.Value{InnerValue: object.Number{Value: float64(n)}},
 	}
 }
 func (s StringDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value]) object.ExpressionResult {
 	return object.ExpressionResult{
-		Value: &object.Value{InnerValue: object.String{Value: string(s)}},
+		SignalVal: &object.Value{InnerValue: object.String{Value: string(s)}},
 	}
 }
 func (n NullDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value]) object.ExpressionResult {
 	return object.ExpressionResult{
-		Value: &object.Value{InnerValue: object.Null{}},
+		SignalVal: &object.Value{InnerValue: object.Null{}},
 	}
 }
 
@@ -243,13 +302,13 @@ func (a ArrayDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value]) object.Expre
 			if res.Signal.Has() {
 				return res
 			}
-			inner, ok := res.Value.InnerValue.(*object.Array)
+			inner, ok := res.SignalVal.InnerValue.(*object.Array)
 			if !ok {
 				return object.ExpressionResult{
 					Signal: signal.SignalRaise,
 					SignalVal: &object.Value{InnerValue: object.Error{
 						Code:    errors.TypeError,
-						Message: fmt.Sprintf("expected array, got %v", res.Value.Normalize().Type()),
+						Message: fmt.Sprintf("expected array, got %v", res.SignalVal.Normalize().Type()),
 					}},
 				}
 			}
@@ -259,10 +318,10 @@ func (a ArrayDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value]) object.Expre
 		if res.Signal.Has() {
 			return res
 		}
-		arr = append(arr, res.Value.Normalize())
+		arr = append(arr, res.SignalVal.Normalize())
 	}
 	return object.ExpressionResult{
-		Value: &object.Value{InnerValue: object.Array{Elements: arr}},
+		SignalVal: &object.Value{InnerValue: object.Array{Elements: arr}},
 	}
 }
 
@@ -270,7 +329,7 @@ func (l LetExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value]) object.
 	val := &object.Value{InnerValue: object.Null{}}
 	scope.Set(l.Name, val)
 	return object.ExpressionResult{
-		Value: val,
+		SignalVal: val,
 	}
 }
 
@@ -280,9 +339,8 @@ func (b BlockExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value]) objec
 		res := IntoEval(expr).Eval(vm, scope)
 		if res.Signal == signal.SignalRaise && b.Catch != nil {
 			scope = scope.Rebase()
-			scope.Set(b.Catch.Name, res.SignalVal)
-			res = BlockExpression(b.Catch.Expressions).Eval(vm, scope)
-			return res
+			scope.Set(b.Catch.Name, res.SignalVal.Normalize())
+			return BlockExpression(b.Catch.Expressions).Eval(vm, scope)
 		}
 		if res.Signal.Has() {
 			return res
@@ -292,6 +350,6 @@ func (b BlockExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value]) objec
 		}
 	}
 	return object.ExpressionResult{
-		Value: &object.Value{InnerValue: object.Null{}},
+		SignalVal: &object.Value{InnerValue: object.Null{}},
 	}
 }

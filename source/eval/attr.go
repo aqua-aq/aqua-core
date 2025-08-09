@@ -8,7 +8,7 @@ import (
 	"github.com/vandi37/aqua/source/signal"
 )
 
-func GetAttr(value *object.Value, name string, clone bool) object.ExpressionResult {
+func GetAttr(value *object.Value, name string) object.ExpressionResult {
 	obj, ok := value.Normalize().InnerValue.(object.Object)
 	if !ok {
 		return object.ExpressionResult{Signal: signal.SignalRaise, SignalVal: &object.Value{
@@ -18,10 +18,8 @@ func GetAttr(value *object.Value, name string, clone bool) object.ExpressionResu
 			}},
 		}
 	}
-	if attr, ok := obj.Map[name]; clone && ok {
-		return object.ExpressionResult{Value: attr.Normalize().Clone()}
-	} else if ok {
-		return object.ExpressionResult{Value: attr.Normalize()}
+	if attr, ok := obj.Map[name]; ok {
+		return object.ExpressionResult{SignalVal: attr.Normalize()}
 	}
 	return object.ExpressionResult{Signal: signal.SignalRaise, SignalVal: &object.Value{
 		InnerValue: object.Error{
@@ -32,9 +30,18 @@ func GetAttr(value *object.Value, name string, clone bool) object.ExpressionResu
 }
 
 func GetAttrMethod(value *object.Value, name string) object.ExpressionResult {
-	attr := GetAttr(value, name, false)
+	attr := GetAttr(value, name)
 	if attr.Signal.Has() {
 		return attr
 	}
-	return Bind(attr.Value.Normalize(), value)
+	return Bind(attr.SignalVal.Normalize(), value)
+}
+
+func AttrExists(value *object.Value, name string) bool {
+	obj, ok := value.Normalize().InnerValue.(object.Object)
+	if !ok {
+		return false
+	}
+	_, ok = obj.Map[name]
+	return ok
 }

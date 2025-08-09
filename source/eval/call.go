@@ -10,67 +10,57 @@ import (
 	"github.com/vandi37/aqua/source/vm"
 )
 
-func Call(vm *vm.VM, clone bool) func(sub, args *object.Value) object.ExpressionResult {
-	return func(sub, args *object.Value) object.ExpressionResult {
-		var it = &object.Value{InnerValue: nil}
+func Call(vm *vm.VM, sub *object.Value, args []*object.Value) object.ExpressionResult {
+	method, ok := sub.Normalize().InnerValue.(object.Method)
+	if !ok {
 		subroutine, ok := sub.Normalize().InnerValue.(*object.Subroutine)
-		if !ok {
-			method, ok := sub.Normalize().InnerValue.(object.Method)
-			if !ok {
-				return object.ExpressionResult{
-					Signal: signal.SignalRaise,
-					SignalVal: &object.Value{InnerValue: object.Error{
-						Code:    errors.TypeError,
-						Message: fmt.Sprintf("expected subroutine, got %v", sub.Normalize().Type()),
-					}},
-				}
-			}
-			it = method.It
-			subroutine = method.Subroutine
-		}
-		subScope := subroutine.Scope.Push()
-		subScope.Set(keywords.It, it.Normalize())
-		vals, ok := args.Normalize().InnerValue.(object.Array)
 		if !ok {
 			return object.ExpressionResult{
 				Signal: signal.SignalRaise,
 				SignalVal: &object.Value{InnerValue: object.Error{
 					Code:    errors.TypeError,
-					Message: fmt.Sprintf("expected array, got %v", sub.Type()),
+					Message: fmt.Sprintf("expected subroutine, got %v", sub.Normalize().Type()),
 				}},
 			}
 		}
-		object.ParseArgs(subroutine.Arguments, vals.Elements, &subScope)
-		if subroutine.BuildIn != nil {
-			return subroutine.BuildIn(subScope).AsExpressionResult().Clone(clone)
+		method = object.Method{
+			Subroutine: subroutine,
+			It:         &object.Value{InnerValue: object.Object{Map: subroutine.Prototype}},
 		}
-		res := BlockExpression(subroutine.Code).Eval(vm, subScope)
-		subRes, ok := res.IntoSubroutineResult()
-		if !ok {
-			return object.ExpressionResult{
-				Signal: signal.SignalRaise,
-				SignalVal: &object.Value{InnerValue: object.Error{
-					Code:    errors.InvalidSignal,
-					Message: fmt.Sprintf("expected none/return/raise, got %v", res.Signal),
-				}},
-			}
-		}
-		return subRes.AsExpressionResult().Clone(clone)
 	}
+
+	subScope := method.Subroutine.Scope.Push()
+	subScope.Set(keywords.It, method.It.Normalize())
+	object.ParseArgs(method.Subroutine.Arguments, args, subScope)
+	if method.Subroutine.BuildIn != nil {
+		return method.Subroutine.BuildIn(subScope).AsExpressionResult()
+	}
+	res := BlockExpression(method.Subroutine.Code).Eval(vm, subScope)
+	subRes, ok := res.IntoSubroutineResult()
+	if !ok {
+		return object.ExpressionResult{
+			Signal: signal.SignalRaise,
+			SignalVal: &object.Value{InnerValue: object.Error{
+				Code:    errors.InvalidSignal,
+				Message: fmt.Sprintf("expected none/return/raise, got %v", res.Signal),
+			}},
+		}
+	}
+	return subRes.AsExpressionResult()
 }
 
 func Bind(sub, it *object.Value) object.ExpressionResult {
 	switch v := sub.Normalize().InnerValue.(type) {
 	case object.Method:
 		return object.ExpressionResult{
-			Value: &object.Value{InnerValue: object.Method{
+			SignalVal: &object.Value{InnerValue: object.Method{
 				Subroutine: v.Subroutine,
 				It:         it,
 			}},
 		}
 	case *object.Subroutine:
 		return object.ExpressionResult{
-			Value: &object.Value{InnerValue: object.Method{
+			SignalVal: &object.Value{InnerValue: object.Method{
 				Subroutine: v,
 				It:         it,
 			}},

@@ -72,3 +72,25 @@ func (s Scope[T]) Set(key string, val T) {
 	s.current.values[key] = val
 	s.current.pointers[key] = s.current
 }
+
+func (s Scope[T]) Delete(key string) bool {
+	if s.current == nil {
+		return false
+	}
+
+	_, hasValue := s.current.values[key]
+	_, hasPointer := s.current.pointers[key]
+
+	if hasValue || hasPointer {
+		delete(s.current.values, key)
+		delete(s.current.pointers, key)
+		return true
+	}
+
+	return false
+}
+
+func (s Scope[T]) Clear() {
+	clear(s.current.values)
+	clear(s.current.pointers)
+}

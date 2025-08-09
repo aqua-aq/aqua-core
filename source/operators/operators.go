@@ -118,7 +118,6 @@ const (
 	Not
 	Inc
 	Dec
-	New
 )
 
 func (o PrefixOperator) String() string {
@@ -131,8 +130,6 @@ func (o PrefixOperator) String() string {
 		return "++"
 	case Dec:
 		return "--"
-	case New:
-		return "new"
 	default:
 		return "unknown"
 	}

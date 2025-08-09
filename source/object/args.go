@@ -2,8 +2,7 @@ package object
 
 import "github.com/vandi37/aqua/pkg/scope"
 
-func ParseArgs(args Arguments, vals []*Value, scope *scope.Scope[*Value]) {
-	*scope = scope.Push()
+func ParseArgs(args Arguments, vals []*Value, scope scope.Scope[*Value]) {
 	for i, arg := range args.Elements {
 		var val *Value
 		if i >= len(vals) {

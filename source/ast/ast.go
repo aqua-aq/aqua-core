@@ -38,7 +38,11 @@ type (
 			IsContinuos bool
 		}
 	}
-
+	SubroutineDec struct {
+		Arguments Arguments
+		Body      BlockExpression
+		Prototype ObjectDec
+	}
 	BinExpression struct {
 		Left     Expression
 		Operator operators.Operator
@@ -47,6 +51,10 @@ type (
 	PrefixExpression struct {
 		Operator operators.PrefixOperator
 		Value    Expression
+	}
+	CalLExpression struct {
+		Subroutine Expression
+		Args       []Expression
 	}
 
 	LetExpression struct {
@@ -86,11 +94,9 @@ type (
 		Else  *BlockExpression
 		Catch *CatchBlock
 	}
-	SubroutineDec struct {
-		Arguments Arguments
-		Body      BlockExpression
-		// optional
-		Prototype *ObjectDec
+	GlobalSubroutineDec struct {
+		SubroutineDec SubroutineDec
+		Name          string
 	}
 	SignalExpression struct {
 		Signal signal.Signal
@@ -98,19 +104,21 @@ type (
 	}
 )
 
-func (ObjectDec) expression()        {}
-func (IntDec) expression()           {}
-func (NumDec) expression()           {}
-func (NullDec) expression()          {}
-func (StringDec) expression()        {}
-func (ErrorDec) expression()         {}
-func (ArrayDec) expression()         {}
-func (BinExpression) expression()    {}
-func (PrefixExpression) expression() {}
-func (LetExpression) expression()    {}
-func (BlockExpression) expression()  {}
-func (IfExpression) expression()     {}
-func (ForExpression) expression()    {}
-func (WhileExpression) expression()  {}
-func (SubroutineDec) expression()    {}
-func (SignalExpression) expression() {}
+func (ObjectDec) expression()           {}
+func (IntDec) expression()              {}
+func (NumDec) expression()              {}
+func (NullDec) expression()             {}
+func (StringDec) expression()           {}
+func (ErrorDec) expression()            {}
+func (ArrayDec) expression()            {}
+func (BinExpression) expression()       {}
+func (PrefixExpression) expression()    {}
+func (LetExpression) expression()       {}
+func (CalLExpression) expression()      {}
+func (BlockExpression) expression()     {}
+func (IfExpression) expression()        {}
+func (ForExpression) expression()       {}
+func (WhileExpression) expression()     {}
+func (GlobalSubroutineDec) expression() {}
+func (SubroutineDec) expression()       {}
+func (SignalExpression) expression()    {}

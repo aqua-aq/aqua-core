@@ -7,7 +7,6 @@ import (
 )
 
 type ExpressionResult struct {
-	Value     *Value
 	Signal    signal.Signal
 	SignalVal *Value
 }
@@ -21,27 +20,22 @@ func (s SubroutineResult) AsExpressionResult() ExpressionResult {
 	if s.Signal {
 		return ExpressionResult{
 			Signal:    signal.SignalRaise,
-			SignalVal: s.SignalVal,
+			SignalVal: s.SignalVal.Normalize(),
 		}
 	}
 	return ExpressionResult{
-		Value: s.SignalVal,
+		SignalVal: s.SignalVal.Normalize(),
 	}
 }
 
 func (s ExpressionResult) IntoSubroutineResult() (SubroutineResult, bool) {
-	if !s.Signal.Has() {
-		return SubroutineResult{
-			SignalVal: s.Value,
-		}, true
-	}
 	sig, ok := s.Signal.IntoSubroutineSignal()
 	if !ok {
 		return SubroutineResult{}, false
 	}
 	return SubroutineResult{
 		Signal:    sig,
-		SignalVal: s.SignalVal,
+		SignalVal: s.SignalVal.Normalize(),
 	}, true
 
 }
@@ -49,24 +43,19 @@ func (s ExpressionResult) Clone(need bool) ExpressionResult {
 	if !need {
 		return s
 	}
-	if s.Signal.Has() {
-		return ExpressionResult{
-			Signal:    s.Signal,
-			SignalVal: s.SignalVal.Clone(),
-		}
-	}
 	return ExpressionResult{
-		Value: s.Value.Clone(),
+		Signal:    s.Signal,
+		SignalVal: s.SignalVal.Normalize().Clone(),
 	}
 }
 
 func (s ExpressionResult) String() string {
 	if s.Signal.Has() {
-		return fmt.Sprintf("%v: %v", s.Signal, s.SignalVal)
+		return fmt.Sprintf("%v: %v", s.Signal, s.SignalVal.Normalize())
 	}
-	return fmt.Sprintf("%v", s.Value)
+	return fmt.Sprintf("%v", s.SignalVal.Normalize())
 }
 
 func (s SubroutineResult) String() string {
-	return fmt.Sprintf("%v: %v", s.Signal, s.SignalVal)
+	return fmt.Sprintf("%v: %v", s.Signal, s.SignalVal.Normalize())
 }
