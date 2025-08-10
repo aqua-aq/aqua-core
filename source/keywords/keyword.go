@@ -3,5 +3,8 @@ package keywords
 const (
 	It   = "it"
 	Iter = "iter"
-	Next = "next"
+	Neg  = "neg"
+	Not  = "not"
+	Dec  = "decrease"
+	Inc  = "increase"
 )

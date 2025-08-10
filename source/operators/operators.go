@@ -1,5 +1,7 @@
 package operators
 
+import "github.com/vandi37/aqua/source/keywords"
+
 type Operator uint32
 
 const (
@@ -27,9 +29,9 @@ const (
 	In
 	Index
 	Dot
-	Call
 	Comma
 	Method
+	Bind
 )
 
 func (o Operator) String() string {
@@ -74,14 +76,14 @@ func (o Operator) String() string {
 		return "in"
 	case Index:
 		return "[]"
-	case Call:
-		return "()"
 	case Dot:
 		return "."
 	case Comma:
 		return ","
 	case Method:
-		return "::"
+		return ".>"
+	case Bind:
+		return "->"
 	case Assign | Plus:
 		return "+="
 	case Assign | Minus:
@@ -130,6 +132,20 @@ func (o PrefixOperator) String() string {
 		return "++"
 	case Dec:
 		return "--"
+	default:
+		return "unknown"
+	}
+}
+func (o PrefixOperator) Method() string {
+	switch o {
+	case Neg:
+		return keywords.Neg
+	case Not:
+		return keywords.Not
+	case Inc:
+		return keywords.Inc
+	case Dec:
+		return keywords.Dec
 	default:
 		return "unknown"
 	}

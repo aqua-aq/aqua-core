@@ -38,8 +38,7 @@ type (
 	Subroutine struct {
 		Arguments Arguments
 		Scope     scope.Scope[*Value]
-		// use empty map for no prototype
-		Prototype map[string]*Value
+		Prototype *Value
 		// optional
 		BuildIn func(scope.Scope[*Value]) SubroutineResult
 		// optional code

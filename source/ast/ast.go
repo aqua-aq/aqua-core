@@ -11,13 +11,11 @@ type Expression interface {
 }
 
 type (
-	Argument struct {
-		Name    string
-		Default Expression
-	}
 	Arguments struct {
-		Elements []Argument
-		// optional
+		Elements []struct {
+			Name    string
+			Default Expression
+		}
 		Last *string
 	}
 	ObjectDec struct {
@@ -41,7 +39,7 @@ type (
 	SubroutineDec struct {
 		Arguments Arguments
 		Body      BlockExpression
-		Prototype ObjectDec
+		Prototype Expression
 	}
 	BinExpression struct {
 		Left     Expression
@@ -63,36 +61,34 @@ type (
 
 	BlockExpression struct {
 		Expressions []Expression
-		Catch       *CatchBlock
+		Catch       *struct {
+			Name        string
+			Expressions BlockExpression
+		}
 	}
-
-	CatchBlock struct {
-		Name        string
-		Expressions BlockExpression
-	}
-
 	IfExpression struct {
-		If      BlockExpression
-		ElseIfs []BlockExpression
-		Else    *BlockExpression
-		Catch   *CatchBlock
+		If        BlockExpression
+		Condition Expression
+		ElseIfs   []struct {
+			Block        BlockExpression
+			Condition Expression
+		}
+		Else *BlockExpression
 	}
 	ForExpression struct {
 		Arguments  Arguments
 		Expression Expression
+		IsEnum     bool
 		Block      BlockExpression
 		Else       *BlockExpression
-		Catch      *CatchBlock
 	}
 	WhileExpression struct {
 		// a marker is a expression while or repeat-until
 		IsWhile   bool
 		Condition Expression
-		// optional, may be nil
 		After Expression
 		Block BlockExpression
 		Else  *BlockExpression
-		Catch *CatchBlock
 	}
 	GlobalSubroutineDec struct {
 		SubroutineDec SubroutineDec
@@ -101,6 +97,9 @@ type (
 	SignalExpression struct {
 		Signal signal.Signal
 		SigVal Expression
+	}
+	IdentExpression struct {
+		Ident string
 	}
 )
 
@@ -122,3 +121,4 @@ func (WhileExpression) expression()     {}
 func (GlobalSubroutineDec) expression() {}
 func (SubroutineDec) expression()       {}
 func (SignalExpression) expression()    {}
+func (IdentExpression) expression()     {}

@@ -295,7 +295,7 @@ sub Person(name, age)
     it.age = age
 end
 
-a = new Person("Alice", 10)
+a = Person("Alice", 10)
 
 sub Person(name, age)
     it.name = name
@@ -306,8 +306,8 @@ with {
 }
 
 
-a = new Person("Alice")
-a.greet() # Hello, My name is Alice
+a = Person("Alice")
+a.>greet() # Hello, My name is Alice
 
 # exceptions
 

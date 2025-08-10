@@ -10,7 +10,7 @@ import (
 	"github.com/vandi37/aqua/source/vm"
 )
 
-func Call(vm *vm.VM, sub *object.Value, args []*object.Value) object.ExpressionResult {
+func Call(vm *vm.VM, sub *object.Value, args []*object.Value, clone bool) object.ExpressionResult {
 	method, ok := sub.Normalize().InnerValue.(object.Method)
 	if !ok {
 		subroutine, ok := sub.Normalize().InnerValue.(*object.Subroutine)
@@ -25,7 +25,7 @@ func Call(vm *vm.VM, sub *object.Value, args []*object.Value) object.ExpressionR
 		}
 		method = object.Method{
 			Subroutine: subroutine,
-			It:         &object.Value{InnerValue: object.Object{Map: subroutine.Prototype}},
+			It:         &object.Value{InnerValue: subroutine.Prototype.Normalize()},
 		}
 	}
 
@@ -35,7 +35,7 @@ func Call(vm *vm.VM, sub *object.Value, args []*object.Value) object.ExpressionR
 	if method.Subroutine.BuildIn != nil {
 		return method.Subroutine.BuildIn(subScope).AsExpressionResult()
 	}
-	res := BlockExpression(method.Subroutine.Code).Eval(vm, subScope)
+	res := BlockExpression(method.Subroutine.Code).Eval(vm, subScope, clone)
 	subRes, ok := res.IntoSubroutineResult()
 	if !ok {
 		return object.ExpressionResult{
