@@ -2,10 +2,10 @@ package operators
 
 import "github.com/vandi37/aqua/source/keywords"
 
-type Operator uint32
+type Operator byte
 
 const (
-	Assign Operator = 1 << iota
+	None Operator = iota
 	Plus
 	Minus
 	Multiply
@@ -29,15 +29,12 @@ const (
 	In
 	Index
 	Dot
-	Comma
 	Method
 	Bind
 )
 
 func (o Operator) String() string {
 	switch o {
-	case Assign:
-		return "="
 	case Plus:
 		return "+"
 	case Minus:
@@ -47,7 +44,7 @@ func (o Operator) String() string {
 	case Divide:
 		return "/"
 	case Modulo:
-		return "%"
+		return "%%"
 	case StrongDivide:
 		return "//"
 	case And:
@@ -78,38 +75,21 @@ func (o Operator) String() string {
 		return "[]"
 	case Dot:
 		return "."
-	case Comma:
-		return ","
 	case Method:
 		return ".>"
 	case Bind:
 		return "->"
-	case Assign | Plus:
-		return "+="
-	case Assign | Minus:
-		return "-="
-	case Assign | Multiply:
-		return "*="
-	case Assign | Divide:
-		return "/="
-	case Assign | Modulo:
-		return "%="
-	case Assign | StrongDivide:
-		return "//="
-	case Assign | And:
-		return "and="
-	case Assign | Or:
-		return "or="
-	case Assign | Xor:
-		return "xor="
-	case Assign | Shr:
-		return ">>="
-	case Assign | Shl:
-		return "<<="
-	case Assign | In:
-		return "in="
 	default:
 		return "unknown"
+	}
+}
+
+func (o Operator) IsValidInAssign() bool {
+	switch o {
+	case None, Plus, Minus, Multiply, Divide, Modulo, StrongDivide, And, Or, Xor, Shr, Shl, In, Bind:
+		return true
+	default:
+		return false
 	}
 }
 

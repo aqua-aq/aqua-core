@@ -13,14 +13,14 @@ type Expression interface {
 type (
 	Arguments struct {
 		Elements []struct {
-			Name    string
+			Name    IdentExpression
 			Default Expression
 		}
 		Last *string
 	}
 	ObjectDec struct {
 		Vals []struct {
-			Name        string
+			Name        IdentExpression
 			Value       Expression
 			IsContinuos bool
 		}
@@ -50,19 +50,19 @@ type (
 		Operator operators.PrefixOperator
 		Value    Expression
 	}
-	CalLExpression struct {
+	CallExpression struct {
 		Subroutine Expression
 		Args       []Expression
 	}
 
 	LetExpression struct {
-		Name string
+		IdentExpression
 	}
 
 	BlockExpression struct {
 		Expressions []Expression
 		Catch       *struct {
-			Name        string
+			Name        IdentExpression
 			Expressions BlockExpression
 		}
 	}
@@ -70,7 +70,7 @@ type (
 		If        BlockExpression
 		Condition Expression
 		ElseIfs   []struct {
-			Block        BlockExpression
+			Block     BlockExpression
 			Condition Expression
 		}
 		Else *BlockExpression
@@ -86,13 +86,13 @@ type (
 		// a marker is a expression while or repeat-until
 		IsWhile   bool
 		Condition Expression
-		After Expression
-		Block BlockExpression
-		Else  *BlockExpression
+		After     Expression
+		Block     BlockExpression
+		Else      *BlockExpression
 	}
 	GlobalSubroutineDec struct {
 		SubroutineDec SubroutineDec
-		Name          string
+		Name          IdentExpression
 	}
 	SignalExpression struct {
 		Signal signal.Signal
@@ -100,6 +100,12 @@ type (
 	}
 	IdentExpression struct {
 		Ident string
+		HasAt bool
+	}
+	AssigmentExpression struct {
+		Left     []Expression
+		Right    []Expression
+		Operator operators.Operator
 	}
 )
 
@@ -113,7 +119,7 @@ func (ArrayDec) expression()            {}
 func (BinExpression) expression()       {}
 func (PrefixExpression) expression()    {}
 func (LetExpression) expression()       {}
-func (CalLExpression) expression()      {}
+func (CallExpression) expression()      {}
 func (BlockExpression) expression()     {}
 func (IfExpression) expression()        {}
 func (ForExpression) expression()       {}
@@ -122,3 +128,4 @@ func (GlobalSubroutineDec) expression() {}
 func (SubroutineDec) expression()       {}
 func (SignalExpression) expression()    {}
 func (IdentExpression) expression()     {}
+func (AssigmentExpression) expression() {}

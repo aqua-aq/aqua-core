@@ -90,7 +90,7 @@ a = [...a, ...b] # adding all elements of b to a
 a = [10, true]
 
 # unpacking
-let n, let ok = a # unpacking  array
+[let n, let ok] = a # unpacking  array
 
 # comparing
 a = 10 in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] # true
@@ -125,7 +125,13 @@ let people = {
     }
 }
 name = "sam"
-people.@sam = {age: 28}
+people.@name = {age: 28}
+
+{
+    let alice,
+    let other: peter,
+    let unknown: @name
+} = people
 
 # conditions
 
@@ -145,7 +151,7 @@ elif a == 5
     a += 5
 else 
     a -= 10
-end;
+end
 
 # one line
 
@@ -240,7 +246,7 @@ a = while a < 100 : a ++
 end # if finishes without breaking a will be null
 
 a = while a < 100 : a ++
-    if a == 37 break true
+    if a == 37 break true end
 else
     false
 end
@@ -266,7 +272,7 @@ end
 a = [1, 2, 3, 4, 5]->map((v) => v * 2) # binding it
 
 sub push(array, values...)
-    return array + values
+    return [...array, ...values]
 end
 
 a = push([1, 2, 4, 5, 5, 6], 2)
@@ -332,7 +338,7 @@ Math = {
     sub add(a, b) 
         return a + b
     end
-}
+}   
 
 a = Math.add(10, 20) # 30
 # modules are just global objects 

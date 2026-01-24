@@ -38,8 +38,8 @@ func IntoEval(expr ast.Expression) Eval {
 		return BinExpression(val)
 	case ast.PrefixExpression:
 		return PrefixExpression(val)
-	case ast.CalLExpression:
-		return CalLExpression(val)
+	case ast.CallExpression:
+		return CallExpression(val)
 	case ast.LetExpression:
 		return LetExpression(val)
 	case ast.BlockExpression:
@@ -56,6 +56,8 @@ func IntoEval(expr ast.Expression) Eval {
 		return SignalExpression(val)
 	case ast.IdentExpression:
 		return IdentExpression(val)
+	case ast.AssigmentExpression:
+		return AssigmentExpression(val)
 	default:
 		return NullDec{}
 	}
@@ -72,7 +74,7 @@ type (
 	SubroutineDec       ast.SubroutineDec
 	BinExpression       ast.BinExpression
 	PrefixExpression    ast.PrefixExpression
-	CalLExpression      ast.CalLExpression
+	CallExpression      ast.CallExpression
 	LetExpression       ast.LetExpression
 	BlockExpression     ast.BlockExpression
 	IfExpression        ast.IfExpression
@@ -81,11 +83,43 @@ type (
 	GlobalSubroutineDec ast.GlobalSubroutineDec
 	SignalExpression    ast.SignalExpression
 	IdentExpression     ast.IdentExpression
+	AssigmentExpression ast.AssigmentExpression
 )
 
-// Eval implements Eval.
+func (a AssigmentExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
+	if len(a.Left) != len(a.Right) {
+		return object.ExpressionResult{
+			Signal: signal.SignalRaise,
+			SignalVal: &object.Value{InnerValue: object.Error{
+				Code:    errors.ValueError,
+				Message: fmt.Sprintf("expected %d right values, got %d", len(a.Left), len(a.Right)),
+			}},
+		}
+	}
+	for i, v := range a.Left {
+		left := IntoEval(v).Eval(vm, scope, false)
+		if left.Signal.Has() {
+			return left
+		}
+		right := IntoEval(a.Right[i]).Eval(vm, scope, clone)
+		if right.Signal.Has() {
+			return right
+		}
+		expr := RunBin(vm, scope, clone, left.SignalVal.Normalize(), right.SignalVal.Normalize(), a.Operator)
+		if expr.Signal.Has() {
+			return expr
+		}
+		*left.SignalVal.Normalize() = *expr.SignalVal.Normalize()
+	}
+	return object.ExpressionResult{}
+}
+
 func (i IdentExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
-	val, ok := scope.Get(i.Ident)
+	name, expr := i.GetName(vm, scope)
+	if expr.Signal.Has() {
+		return expr
+	}
+	val, ok := scope.Get(name)
 	if !ok {
 		return object.ExpressionResult{
 			SignalVal: &object.Value{InnerValue: object.Error{
@@ -99,8 +133,7 @@ func (i IdentExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone
 	}
 }
 
-// Eval implements Eval.
-func (c CalLExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
+func (c CallExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
 	sub := IntoEval(c.Subroutine).Eval(vm, scope, false)
 	if sub.Signal.Has() {
 		return sub
@@ -116,13 +149,16 @@ func (c CalLExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone 
 	return Call(vm, sub.SignalVal, args, clone)
 }
 
-// Eval implements Eval.
 func (g GlobalSubroutineDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
 	sub := SubroutineDec(g.SubroutineDec).Eval(vm, scope, false)
 	if sub.Signal.Has() {
 		return sub
 	}
-	scope.Set(g.Name, sub.SignalVal.Normalize())
+	name, expr := IdentExpression(g.Name).GetName(vm, scope)
+	if expr.Signal.Has() {
+		return expr
+	}
+	scope.Set(name, sub.SignalVal.Normalize())
 	return object.ExpressionResult{}
 }
 
@@ -181,7 +217,7 @@ block:
 		goto start
 	case expr.Signal == signal.SignalBreak:
 		result = expr.SignalVal.Normalize()
-		goto after_break
+		goto after
 	case expr.Signal.Has():
 		return expr
 	default:
@@ -189,11 +225,11 @@ block:
 	}
 
 	goto condition
-after_break:
-	if w.Else != nil {
+
+after:
+	if w.Else != nil && result.Normalize().IsNull() {
 		return BlockExpression(*w.Else).Eval(vm, scope, clone)
 	}
-after:
 	return object.ExpressionResult{SignalVal: result.Normalize()}
 }
 
@@ -212,11 +248,16 @@ func (f ForExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone b
 		if res.Signal.Has() {
 			return res
 		}
+		name, expr := IdentExpression(arg.Name).GetName(vm, scope)
+		if expr.Signal.Has() {
+			return expr
+		}
 		arguments.Elements = append(arguments.Elements, object.Argument{
-			Name:    arg.Name,
+			Name:    name,
 			Default: res.SignalVal.Normalize(),
 		})
 	}
+
 	var (
 		result    *object.Value
 		iteration int
@@ -241,7 +282,7 @@ func (f ForExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone b
 				result = expr.SignalVal.Normalize()
 			case expr.Signal == signal.SignalBreak:
 				result = expr.SignalVal.Normalize()
-				goto after_break
+				goto after
 			case expr.Signal.Has():
 				return expr
 			default:
@@ -257,7 +298,7 @@ func (f ForExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone b
 				result = expr.SignalVal.Normalize()
 			case expr.Signal == signal.SignalBreak:
 				result = expr.SignalVal.Normalize()
-				goto after_break
+				goto after
 			case expr.Signal.Has():
 				return expr
 			default:
@@ -286,7 +327,7 @@ func (f ForExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone b
 				result = expr.SignalVal.Normalize()
 			case expr.Signal == signal.SignalBreak:
 				result = expr.SignalVal.Normalize()
-				goto after_break
+				goto after
 			case expr.Signal.Has():
 				return expr
 			default:
@@ -302,7 +343,7 @@ func (f ForExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone b
 				result = expr.SignalVal.Normalize()
 			case expr.Signal == signal.SignalBreak:
 				result = expr.SignalVal.Normalize()
-				goto after_break
+				goto after
 			case expr.Signal.Has():
 				return expr
 			default:
@@ -319,11 +360,10 @@ func (f ForExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone b
 		}
 	}
 	goto after
-after_break:
-	if f.Else != nil {
+after:
+	if f.Else != nil && result.Normalize().IsNull() {
 		return BlockExpression(*f.Else).Eval(vm, scope, clone)
 	}
-after:
 	return object.ExpressionResult{SignalVal: result.Normalize()}
 }
 
@@ -341,6 +381,9 @@ func (i IfExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bo
 	}
 	for _, next := range i.ElseIfs {
 		expr := IntoEval(next.Condition).Eval(vm, scope, false)
+		if expr.Signal.Has() {
+			return expr
+		}
 		ok, expr := IntoBool(vm, expr.SignalVal.Normalize())
 		if ok {
 			return BlockExpression(next.Block).Eval(vm, scope, clone)
@@ -433,7 +476,11 @@ func (o ObjectDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool)
 		if res.Signal.Has() {
 			return res
 		}
-		obj[val.Name] = res.SignalVal.Normalize()
+		name, expr := IdentExpression(val.Name).GetName(vm, scope)
+		if expr.Signal.Has() {
+			return expr
+		}
+		obj[name] = res.SignalVal.Normalize()
 	}
 	return object.ExpressionResult{
 		SignalVal: &object.Value{InnerValue: object.Object{
@@ -448,12 +495,16 @@ func (s SubroutineDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone b
 		if res.Signal.Has() {
 			return res
 		}
+		name, expr := IdentExpression(arg.Name).GetName(vm, scope)
+		if expr.Signal.Has() {
+			return expr
+		}
 		arguments.Elements = append(arguments.Elements, object.Argument{
-			Name:    arg.Name,
+			Name:    name,
 			Default: res.SignalVal.Normalize(),
 		})
 	}
-	res := IntoEval(s.Body).Eval(vm, scope, true)
+	res := IntoEval(s.Prototype).Eval(vm, scope, true)
 	if res.Signal.Has() {
 		return res
 	}
@@ -524,7 +575,11 @@ func (a ArrayDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) 
 
 func (l LetExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
 	val := &object.Value{InnerValue: object.Null{}}
-	scope.Set(l.Name, val)
+	name, expr := IdentExpression(l.IdentExpression).GetName(vm, scope)
+	if expr.Signal.Has() {
+		return expr
+	}
+	scope.Set(name, val)
 	return object.ExpressionResult{
 		SignalVal: val,
 	}
@@ -536,7 +591,11 @@ func (b BlockExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone
 		res := IntoEval(expr).Eval(vm, scope, true)
 		if res.Signal == signal.SignalRaise && b.Catch != nil {
 			scope = scope.Rebase()
-			scope.Set(b.Catch.Name, res.SignalVal.Normalize())
+			name, expr := IdentExpression(b.Catch.Name).GetName(vm, scope)
+			if expr.Signal.Has() {
+				return expr
+			}
+			scope.Set(name, res.SignalVal.Normalize())
 			return BlockExpression(b.Catch.Expressions).Eval(vm, scope, true)
 		}
 		if res.Signal.Has() {

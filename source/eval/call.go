@@ -25,7 +25,7 @@ func Call(vm *vm.VM, sub *object.Value, args []*object.Value, clone bool) object
 		}
 		method = object.Method{
 			Subroutine: subroutine,
-			It:         &object.Value{InnerValue: subroutine.Prototype.Normalize()},
+			It:         subroutine.Prototype.Clone(),
 		}
 	}
 
@@ -45,6 +45,9 @@ func Call(vm *vm.VM, sub *object.Value, args []*object.Value, clone bool) object
 				Message: fmt.Sprintf("expected none/return/raise, got %v", res.Signal),
 			}},
 		}
+	}
+	if subRes.SignalVal.Normalize().IsNull() {
+		return object.ExpressionResult{SignalVal: method.It}
 	}
 	return subRes.AsExpressionResult()
 }
