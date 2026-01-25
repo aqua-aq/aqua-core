@@ -22,5 +22,5 @@ func (i IdentExpression) GetName(vm *vm.VM, scope scope.Scope[*object.Value]) (s
 			}},
 		}
 	}
-	return val.String(), object.ExpressionResult{}
+	return IntoString(vm, val)
 }

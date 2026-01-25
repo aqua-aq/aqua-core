@@ -84,6 +84,53 @@ func (o Operator) String() string {
 	}
 }
 
+func (o Operator) Method() string {
+	switch o {
+	case Plus:
+		return keywords.Add
+	case Minus:
+		return keywords.Sub
+	case Multiply:
+		return keywords.Mul
+	case Divide:
+		return keywords.Div
+	case Modulo:
+		return keywords.Mod
+	case StrongDivide:
+		return keywords.IDiv
+	case And:
+		return keywords.Add
+	case Or:
+		return keywords.Or
+	case Xor:
+		return keywords.Xor
+	case Shr:
+		return keywords.Shr
+	case Shl:
+		return keywords.Shl
+	case Equal:
+		return keywords.Eq
+	case NotEqual:
+		return keywords.Ne
+	case Greater:
+		return keywords.Gt
+	case Less:
+		return keywords.Lt
+	case GreaterEqual:
+		return keywords.Ge
+	case LessEqual:
+		return keywords.Le
+	case In:
+		return keywords.In
+	case Index:
+		return keywords.Index
+	case Bind:
+		return keywords.Bind
+	default:
+		return ""
+	}
+}
+
 func (o Operator) IsValidInAssign() bool {
 	switch o {
 	case None, Plus, Minus, Multiply, Divide, Modulo, StrongDivide, And, Or, Xor, Shr, Shl, In, Bind:
@@ -96,7 +143,8 @@ func (o Operator) IsValidInAssign() bool {
 type PrefixOperator byte
 
 const (
-	Neg PrefixOperator = iota
+	Ptr PrefixOperator = iota
+	Neg
 	Not
 	Inc
 	Dec
@@ -104,6 +152,8 @@ const (
 
 func (o PrefixOperator) String() string {
 	switch o {
+	case Ptr:
+		return "&"
 	case Neg:
 		return "-"
 	case Not:
@@ -127,6 +177,6 @@ func (o PrefixOperator) Method() string {
 	case Dec:
 		return keywords.Dec
 	default:
-		return "unknown"
+		return ""
 	}
 }

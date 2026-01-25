@@ -12,7 +12,7 @@ func IntoBool(vm *vm.VM, val *object.Value) (bool, object.ExpressionResult) {
 	if b, ok := val.Normalize().InnerValue.(object.Bool); ok {
 		return b.Value, object.ExpressionResult{}
 	}
-	method := GetAttrMethod(val.Normalize(), object.TypeBool.String())
+	method := GetAttrMethod(val.Normalize(), keywords.Bool)
 	if method.Signal.Has() {
 		return false, method
 	}
@@ -43,4 +43,18 @@ func IntoIter(val *object.Value, vm *vm.VM) object.ExpressionResult {
 		return method
 	}
 	return Call(vm, method.SignalVal.Normalize(), nil, false)
+}
+func IntoString(vm *vm.VM, val *object.Value) (string, object.ExpressionResult) {
+	if !AttrExists(val.Normalize(), keywords.Display) {
+		return val.Normalize().String(), object.ExpressionResult{}
+	}
+	method := GetAttrMethod(val.Normalize(), keywords.Display)
+	if method.Signal.Has() {
+		return "", method
+	}
+	res := Call(vm, method.SignalVal.Normalize(), nil, false)
+	if res.Signal.Has() {
+		return "", res
+	}
+	return res.SignalVal.Normalize().String(), object.ExpressionResult{}
 }

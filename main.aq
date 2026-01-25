@@ -89,9 +89,6 @@ let c = [...a, ...b] # adding all elements of a and b to c
 a = [...a, ...b] # adding all elements of b to a
 a = [10, true]
 
-# unpacking
-[let n, let ok] = a # unpacking  array
-
 # comparing
 a = 10 in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] # true
 a = 10 in 0..9 # false
@@ -108,7 +105,7 @@ a = {
 a.name = "Bob" # changing an object property or adding a new one
 
 # using any strings as keys
-a.`any` string = 10 # adding a new no name control property
+a. `any string = 10 `# adding a new no name control property
 
 b = {
     birthday: "may 3", 
@@ -126,12 +123,6 @@ let people = {
 }
 name = "sam"
 people.@name = {age: 28}
-
-{
-    let alice,
-    let other: peter,
-    let unknown: @name
-} = people
 
 # conditions
 
@@ -190,16 +181,6 @@ for k, v in {
     if v >= 18 count++ end
 end
 
-keys = ""
-for k in keys {a: 10, b: null}
-    keys += k
-end
-
-sum = 0
-for v in values {a: 10, b: 37}
-    sum += values
-end
-
 # while loop 
 
 a = 0
@@ -209,7 +190,7 @@ end
 
 a = 0
 i = 0
-while i < 10 : i ++ # here it does it after each iteration 
+while i < 10 : i++ # here it does it before each iteration (useless)
     a += i
 end
 
@@ -263,8 +244,8 @@ sub add(a, b) return a + b end
 a = add(10, 20)
 
 sub map(s) 
-    for v in it
-        it[v] = p(s)
+    for i, v in enum it
+        it[i] = s(v)
     end
     return it
 end
@@ -318,11 +299,11 @@ a.>greet() # Hello, My name is Alice
 # exceptions
 
 sub divide(a, b) 
-    if a == 0 then throw "Cannot divide by zero" end
+    if a == 0 then raise "Cannot divide by zero" end
     return a / b
 end
 
-a = divide(1, 0) catch e then infinity end # infinity
+a = begin divide(1, 0) catch e then infinity end # infinity
 # if we do not catch exception, it will be thrown to the top level
 
 # references
