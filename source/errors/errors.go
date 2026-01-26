@@ -15,12 +15,12 @@ const (
 	ValueError
 	InvalidSignal
 	IteratorStop
+	SyntaxError
+	DivisionByZero
 )
 
 func (c Code) Error() string {
 	switch c {
-	case UnknownError:
-		return "unknown error"
 	case TypeError:
 		return "type error"
 	case ValueError:
@@ -29,6 +29,8 @@ func (c Code) Error() string {
 		return "invalid signal"
 	case IteratorStop:
 		return "iterator stop"
+	case SyntaxError:
+		return "syntax error"
 	default:
 		return "unknown error"
 	}

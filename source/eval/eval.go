@@ -20,8 +20,6 @@ func IntoEval(expr ast.Expression) Eval {
 	switch val := expr.(type) {
 	case ast.ObjectDec:
 		return ObjectDec(val)
-	case ast.IntDec:
-		return IntDec(val)
 	case ast.NumDec:
 		return NumDec(val)
 	case ast.StringDec:
@@ -65,7 +63,6 @@ func IntoEval(expr ast.Expression) Eval {
 
 type (
 	ObjectDec           ast.ObjectDec
-	IntDec              ast.IntDec
 	NumDec              ast.NumDec
 	StringDec           ast.StringDec
 	NullDec             ast.NullDec
@@ -266,7 +263,7 @@ func (f ForExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone b
 	declareVals := func(args []*object.Value) {
 		scope = scope.Rebase()
 		if f.IsEnum {
-			args = append([]*object.Value{{InnerValue: object.Int{Value: iteration}}}, args...)
+			args = append([]*object.Value{{InnerValue: object.Number{Value: float64(iteration)}}}, args...)
 		}
 		iteration++
 		object.ParseArgs(arguments, args, scope)
@@ -308,7 +305,7 @@ func (f ForExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone b
 	case object.Method, *object.Subroutine:
 		for {
 			expr = Call(vm, iter.SignalVal.Normalize(), nil, false)
-			if expr.Signal == signal.SignalRaise && (expr.SignalVal.Normalize().InnerValue == object.Error{Code: errors.IteratorStop}) {
+			if err, ok := expr.SignalVal.Normalize().InnerValue.(object.Error); ok && expr.Signal == signal.SignalRaise && err.Code == errors.IteratorStop {
 				break
 			}
 			if expr.Signal.Has() {
@@ -412,22 +409,16 @@ func (p PrefixExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clon
 	if p.Operator == operators.Ptr {
 		return expr // No clone
 	}
-	switch val := expr.SignalVal.Normalize().InnerValue.(type) {
-	case object.Int:
-		switch p.Operator {
-		case operators.Neg:
-			return object.ExpressionResult{SignalVal: &object.Value{InnerValue: object.Int{Value: -val.Value}}}
-		case operators.Not:
-			return object.ExpressionResult{SignalVal: &object.Value{InnerValue: object.Int{Value: ^val.Value}}}
-		case operators.Inc:
-			expr.SignalVal.Normalize().InnerValue = object.Int{Value: val.Value + 1}
-			return expr.Clone(clone)
-		case operators.Dec:
-			expr.SignalVal.Normalize().InnerValue = object.Int{Value: val.Value - 1}
-			return expr.Clone(clone)
-		default:
-			return typeRaise
+	if p.Operator == operators.Typeof {
+		return object.ExpressionResult{
+			SignalVal: &object.Value{
+				InnerValue: object.String{
+					Value: expr.SignalVal.Normalize().Type().String(),
+				},
+			},
 		}
+	}
+	switch val := expr.SignalVal.Normalize().InnerValue.(type) {
 	case object.Number:
 		switch p.Operator {
 		case operators.Neg:
@@ -438,6 +429,11 @@ func (p PrefixExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clon
 		case operators.Dec:
 			expr.SignalVal.Normalize().InnerValue = object.Number{Value: val.Value - 1}
 			return expr.Clone(clone)
+		case operators.Not:
+			if float64(int(val.Value)) == val.Value {
+				return object.ExpressionResult{SignalVal: &object.Value{InnerValue: object.Number{Value: float64(^int(val.Value))}}}
+			}
+			return typeRaise
 		default:
 			return typeRaise
 		}
@@ -492,7 +488,6 @@ func (p PrefixExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clon
 	default:
 		return typeRaise
 	}
-
 }
 
 func (b BinExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
@@ -500,7 +495,30 @@ func (b BinExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone b
 	if left.Signal.Has() {
 		return left.Clone(clone)
 	}
-	right := IntoEval(b.Right).Eval(vm, scope, clone)
+
+	if b.Operator == operators.Dot || b.Operator == operators.Method {
+		if right, ok := b.Right.(ast.IdentExpression); ok {
+			name, res := IdentExpression(right).GetName(vm, scope)
+			if res.Signal.Has() {
+				return res.Clone(clone)
+			}
+			if b.Operator == operators.Dot {
+				return GetAttr(left.SignalVal.Normalize(), name).Clone(clone)
+			}
+			return GetAttrMethod(left.SignalVal.Normalize(), name).Clone(clone)
+		}
+		return object.ExpressionResult{
+			Signal: signal.SignalRaise,
+			SignalVal: &object.Value{
+				InnerValue: object.Error{
+					Code:    errors.SyntaxError,
+					Message: fmt.Sprintf("expected identifier after '%s'", b.Operator.String()),
+				},
+			},
+		}
+
+	}
+	right := IntoEval(b.Right).Eval(vm, scope, false)
 	if right.Signal.Has() {
 		return right.Clone(clone)
 	}
@@ -574,12 +592,6 @@ func (s SubroutineDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone b
 				Code:      s.Body,
 			},
 		},
-	}
-}
-
-func (i IntDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
-	return object.ExpressionResult{
-		SignalVal: &object.Value{InnerValue: object.Int{Value: int(i)}},
 	}
 }
 

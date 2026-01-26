@@ -2,6 +2,8 @@ package object
 
 import (
 	"fmt"
+	"maps"
+	"slices"
 	"strings"
 
 	"github.com/vandi37/aqua/pkg/scope"
@@ -13,6 +15,7 @@ type InnerValue interface {
 	value()
 	Clone() *Value
 	Type() Type
+	Equals(value *Value) bool
 	fmt.Stringer
 }
 
@@ -51,7 +54,6 @@ type (
 
 	Null   struct{}
 	Error  errors.Error
-	Int    struct{ Value int }
 	Number struct{ Value float64 }
 	String struct{ Value string }
 	Bool   struct{ Value bool }
@@ -70,15 +72,30 @@ func (Object) Type() Type { return TypeObject }
 func (o Object) String() string {
 	return fmt.Sprintf("%v", o.Map)
 }
+func (o Object) Equals(value *Value) bool {
+	if obj, ok := value.Normalize().InnerValue.(Object); ok {
+		return o.Constructor == obj.Constructor && maps.Equal(o.Map, obj.Map)
+	}
+	return false
+}
 func (Null) value()         {}
 func (Null) Clone() *Value  { return &Value{Null{}} }
 func (Null) Type() Type     { return TypeNull }
 func (Null) String() string { return "null" }
-func (Error) value()        {}
+func (Null) Equals(value *Value) bool {
+	return value.Type() == TypeNull
+}
+func (Error) value() {}
 func (e Error) Clone() *Value {
 	return &Value{e}
 }
 func (Error) Type() Type { return TypeError }
+func (e Error) Equals(value *Value) bool {
+	if err, ok := value.Normalize().InnerValue.(Error); ok {
+		return e == err
+	}
+	return false
+}
 func (e Error) String() string {
 	return fmt.Sprintf("%s", errors.Error(e).Error())
 }
@@ -90,37 +107,61 @@ func (*Subroutine) Type() Type { return TypeSubroutine }
 func (s *Subroutine) String() string {
 	return fmt.Sprintf("%v", s.Arguments)
 }
+func (s *Subroutine) Equals(value *Value) bool {
+	if sub, ok := value.Normalize().InnerValue.(*Subroutine); ok {
+		return s == sub
+	}
+	return false
+}
 func (Method) value() {}
 func (m Method) Clone() *Value {
 	return &Value{m}
 }
 func (Method) Type() Type       { return TypeSubroutine }
 func (m Method) String() string { return m.Subroutine.String() }
-func (Int) value()              {}
-func (i Int) Clone() *Value {
-	return &Value{i}
+func (m Method) Equals(value *Value) bool {
+	if method, ok := value.Normalize().InnerValue.(Method); ok {
+		return m.Subroutine == method.Subroutine && m.It.Equals(method.It)
+	}
+	return false
 }
-func (Int) Type() Type       { return TypeInt }
-func (i Int) String() string { return fmt.Sprintf("%v", i.Value) }
-func (Number) value()        {}
+func (Number) value() {}
 func (n Number) Clone() *Value {
 	return &Value{n}
 }
 func (Number) Type() Type       { return TypeNumber }
 func (n Number) String() string { return fmt.Sprintf("%v", n.Value) }
-func (String) value()           {}
+func (n Number) Equals(value *Value) bool {
+	if num, ok := value.Normalize().InnerValue.(Number); ok {
+		return n == num
+	}
+	return false
+}
+func (String) value() {}
 func (s String) Clone() *Value {
 	return &Value{s}
 }
 func (String) Type() Type       { return TypeString }
 func (s String) String() string { return fmt.Sprintf("\"%v\"", s.Value) }
-func (Bool) value()             {}
+func (s String) Equals(value *Value) bool {
+	if str, ok := value.Normalize().InnerValue.(String); ok {
+		return s == str
+	}
+	return false
+}
+func (Bool) value() {}
 func (b Bool) Clone() *Value {
 	return &Value{b}
 }
 func (Bool) Type() Type       { return TypeBool }
 func (b Bool) String() string { return fmt.Sprintf("%v", b.Value) }
-func (Array) value()          {}
+func (b Bool) Equals(value *Value) bool {
+	if boolean, ok := value.Normalize().InnerValue.(Bool); ok {
+		return b == boolean
+	}
+	return false
+}
+func (Array) value() {}
 func (a Array) Clone() *Value {
 	clone := make([]*Value, 0, len(a.Elements))
 	for _, v := range a.Elements {
@@ -131,6 +172,12 @@ func (a Array) Clone() *Value {
 func (Array) Type() Type { return TypeArray }
 func (a Array) String() string {
 	return fmt.Sprintf("%v", a.Elements)
+}
+func (a Array) Equals(value *Value) bool {
+	if arr, ok := value.Normalize().InnerValue.(Array); ok {
+		return slices.Equal(a.Elements, arr.Elements)
+	}
+	return false
 }
 func (a Arguments) String() string {
 	sb := strings.Builder{}

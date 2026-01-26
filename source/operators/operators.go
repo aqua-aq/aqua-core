@@ -28,9 +28,10 @@ const (
 
 	In
 	Index
+	Bind
+
 	Dot
 	Method
-	Bind
 )
 
 func (o Operator) String() string {
@@ -148,6 +149,7 @@ const (
 	Not
 	Inc
 	Dec
+	Typeof
 )
 
 func (o PrefixOperator) String() string {
@@ -162,6 +164,8 @@ func (o PrefixOperator) String() string {
 		return "++"
 	case Dec:
 		return "--"
+	case Typeof:
+		return "typeof"
 	default:
 		return "unknown"
 	}

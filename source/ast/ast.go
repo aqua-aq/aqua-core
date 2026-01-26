@@ -25,7 +25,6 @@ type (
 			IsContinuos bool
 		}
 	}
-	IntDec    int
 	NumDec    float64
 	StringDec string
 	NullDec   struct{}
@@ -110,7 +109,6 @@ type (
 )
 
 func (ObjectDec) expression()           {}
-func (IntDec) expression()              {}
 func (NumDec) expression()              {}
 func (NullDec) expression()             {}
 func (StringDec) expression()           {}
