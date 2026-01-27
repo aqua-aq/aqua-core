@@ -3,6 +3,8 @@ package eval
 import (
 	"fmt"
 
+	"github.com/vandi37/aqua/pkg/pos"
+	"github.com/vandi37/aqua/pkg/stacktrace"
 	"github.com/vandi37/aqua/source/errors"
 	"github.com/vandi37/aqua/source/keywords"
 	"github.com/vandi37/aqua/source/object"
@@ -10,12 +12,12 @@ import (
 	"github.com/vandi37/aqua/source/vm"
 )
 
-func Call(vm *vm.VM, sub *object.Value, args []*object.Value, clone bool) object.ExpressionResult {
+func Call(vm *vm.VM, sub *object.Value, args []*object.Value, clone bool, pos pos.Pos) object.ExpressionResult {
 	method, ok := sub.Normalize().InnerValue.(object.Method)
 	if !ok {
 		subroutine, ok := sub.Normalize().InnerValue.(*object.Subroutine)
 		if !ok {
-			return object.ExpressionResult{
+			return object.ExpressionResult{Trace: stacktrace.New(pos),
 				Signal: signal.SignalRaise,
 				SignalVal: &object.Value{InnerValue: object.Error{
 					Code:    errors.TypeError,
@@ -33,12 +35,15 @@ func Call(vm *vm.VM, sub *object.Value, args []*object.Value, clone bool) object
 	subScope.Set(keywords.It, method.It.Normalize())
 	object.ParseArgs(method.Subroutine.Arguments, args, subScope)
 	if method.Subroutine.BuildIn != nil {
-		return method.Subroutine.BuildIn(subScope).AsExpressionResult()
+		res := method.Subroutine.BuildIn(subScope).AsExpressionResult()
+		res.Trace = res.Trace.Add(method.Subroutine.Name, pos)
+		return res
 	}
 	res := BlockExpression(method.Subroutine.Code).Eval(vm, subScope, clone)
+	res.Trace = res.Trace.Add(method.Subroutine.Name, pos)
 	subRes, ok := res.IntoSubroutineResult()
 	if !ok {
-		return object.ExpressionResult{
+		return object.ExpressionResult{Trace: stacktrace.New(pos),
 			Signal: signal.SignalRaise,
 			SignalVal: &object.Value{InnerValue: object.Error{
 				Code:    errors.InvalidSignal,
@@ -47,29 +52,29 @@ func Call(vm *vm.VM, sub *object.Value, args []*object.Value, clone bool) object
 		}
 	}
 	if subRes.SignalVal.Normalize().IsNull() {
-		return object.ExpressionResult{SignalVal: method.It}
+		return object.ExpressionResult{SignalVal: method.It, Trace: subRes.Trace}
 	}
 	return subRes.AsExpressionResult()
 }
 
-func Bind(sub, it *object.Value) object.ExpressionResult {
+func Bind(sub, it *object.Value, pos pos.Pos) object.ExpressionResult {
 	switch v := sub.Normalize().InnerValue.(type) {
 	case object.Method:
-		return object.ExpressionResult{
+		return object.ExpressionResult{Trace: stacktrace.New(pos),
 			SignalVal: &object.Value{InnerValue: object.Method{
 				Subroutine: v.Subroutine,
 				It:         it,
 			}},
 		}
 	case *object.Subroutine:
-		return object.ExpressionResult{
+		return object.ExpressionResult{Trace: stacktrace.New(pos),
 			SignalVal: &object.Value{InnerValue: object.Method{
 				Subroutine: v,
 				It:         it,
 			}},
 		}
 	default:
-		return object.ExpressionResult{
+		return object.ExpressionResult{Trace: stacktrace.New(pos),
 			Signal: signal.SignalRaise,
 			SignalVal: &object.Value{InnerValue: object.Error{
 				Code:    errors.TypeError,

@@ -1,0 +1,32 @@
+package pos
+
+import (
+	"fmt"
+	"path/filepath"
+)
+
+type Pos struct {
+	line, column uint
+	path         string
+}
+
+func NewPos(line, column uint, path string) (Pos, error) {
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return Pos{}, err
+	}
+	return Pos{line, column, absPath}, nil
+}
+func (p Pos) GetLine() uint {
+	return p.line
+}
+func (p Pos) GetColumn() uint {
+	return p.column
+}
+func (p Pos) GetPath() string {
+	return p.path
+}
+
+func (p Pos) String() string {
+	return fmt.Sprintf("%s:%d:%d", p.path, p.line, p.column)
+}

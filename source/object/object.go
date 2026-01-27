@@ -26,8 +26,7 @@ type Value struct {
 type (
 	Object struct {
 		// an object should always be initialized
-		Map         map[string]*Value
-		Constructor *Subroutine
+		Map map[string]*Value
 	}
 	Argument struct {
 		Name    string
@@ -39,6 +38,7 @@ type (
 		Last *string
 	}
 	Subroutine struct {
+		Name      string
 		Arguments Arguments
 		Scope     scope.Scope[*Value]
 		Prototype *Value
@@ -66,7 +66,7 @@ func (o Object) Clone() *Value {
 	for k, v := range o.Map {
 		oMap[k] = v.Clone()
 	}
-	return &Value{Object{oMap, o.Constructor}}
+	return &Value{Object{oMap}}
 }
 func (Object) Type() Type { return TypeObject }
 func (o Object) String() string {
@@ -74,7 +74,7 @@ func (o Object) String() string {
 }
 func (o Object) Equals(value *Value) bool {
 	if obj, ok := value.Normalize().InnerValue.(Object); ok {
-		return o.Constructor == obj.Constructor && maps.Equal(o.Map, obj.Map)
+		return maps.Equal(o.Map, obj.Map)
 	}
 	return false
 }
@@ -121,7 +121,7 @@ func (Method) Type() Type       { return TypeSubroutine }
 func (m Method) String() string { return m.Subroutine.String() }
 func (m Method) Equals(value *Value) bool {
 	if method, ok := value.Normalize().InnerValue.(Method); ok {
-		return m.Subroutine == method.Subroutine && m.It.Equals(method.It)
+		return m.Subroutine == method.Subroutine
 	}
 	return false
 }

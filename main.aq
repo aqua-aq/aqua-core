@@ -105,7 +105,7 @@ a = {
 a.name = "Bob" # changing an object property or adding a new one
 
 # using any strings as keys
-a. `any string = 10 `# adding a new no name control property
+a. `any string` = 10 # adding a new no name control property
 
 b = {
     birthday: "may 3", 
@@ -315,11 +315,11 @@ inc(&a) # a == 11
 
 # modules 
 
-Math = {
+mod math
     sub add(a, b) 
         return a + b
     end
-}   
+end
 
-a = Math.add(10, 20) # 30
+a = math.add(10, 20) # 30
 # modules are just global objects 
