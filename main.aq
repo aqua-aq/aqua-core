@@ -286,7 +286,7 @@ a = Person("Alice", 10)
 
 sub Person(name, age)
     it.name = name
-    if age != null then it.age = age end
+    if age ~= null then it.age = age end
 with {
     age: 10, # default
     sub greet() return "Hello, My name is @{it.name}" end

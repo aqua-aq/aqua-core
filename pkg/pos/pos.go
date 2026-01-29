@@ -27,6 +27,17 @@ func (p Pos) GetPath() string {
 	return p.path
 }
 
+func (p *Pos) AddColumn(n uint) {
+	p.column += n
+}
+func (p *Pos) AddOneColumn() {
+	p.column++
+}
+func (p *Pos) NextLine() {
+	p.line++
+	p.column = 0
+}
+
 func (p Pos) String() string {
 	return fmt.Sprintf("%s:%d:%d", p.path, p.line, p.column)
 }
