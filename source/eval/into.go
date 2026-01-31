@@ -18,7 +18,7 @@ func IntoBool(vm *vm.VM, val *object.Value, pos pos.Pos) (bool, object.Expressio
 	if method.Signal.Has() {
 		return false, method
 	}
-	res := Call(vm, method.SignalVal.Normalize(), nil, false, pos)
+	res := Call(vm, method.SignalVal.Normalize(), nil, false, pos, nil)
 	if res.Signal.Has() {
 		return false, res
 	}
@@ -45,7 +45,7 @@ func IntoIter(val *object.Value, vm *vm.VM, pos pos.Pos) object.ExpressionResult
 	if method.Signal.Has() {
 		return method
 	}
-	return Call(vm, method.SignalVal.Normalize(), nil, false, pos)
+	return Call(vm, method.SignalVal.Normalize(), nil, false, pos, nil)
 }
 func IntoString(vm *vm.VM, val *object.Value, pos pos.Pos) (string, object.ExpressionResult) {
 	if !AttrExists(val.Normalize(), keywords.Display) {
@@ -55,7 +55,7 @@ func IntoString(vm *vm.VM, val *object.Value, pos pos.Pos) (string, object.Expre
 	if method.Signal.Has() {
 		return "", method
 	}
-	res := Call(vm, method.SignalVal.Normalize(), nil, false, pos)
+	res := Call(vm, method.SignalVal.Normalize(), nil, false, pos, nil)
 	if res.Signal.Has() {
 		return "", res
 	}

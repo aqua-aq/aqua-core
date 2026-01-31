@@ -11,7 +11,6 @@ func (l *Lexer) InitOneChar() {
 	l.OneChar['>'] = tokens.TokenGt
 	l.OneChar['<'] = tokens.TokenLt
 	l.OneChar['='] = tokens.TokenAssign
-	l.OneChar['@'] = tokens.TokenAt
 	l.OneChar['&'] = tokens.TokenPtr
 	l.OneChar[':'] = tokens.TokenColumn
 	l.OneChar['.'] = tokens.TokenDot
@@ -34,7 +33,6 @@ func (l *Lexer) InitDoubleChar() {
 	l.DoubleChar[[2]rune{'<', '='}] = tokens.TokenLe
 	l.DoubleChar[[2]rune{'.', '>'}] = tokens.TokenMethod
 	l.DoubleChar[[2]rune{'-', '>'}] = tokens.TokenBind
-	l.DoubleChar[[2]rune{'=', '>'}] = tokens.TokenArrow
 	l.DoubleChar[[2]rune{'+', '+'}] = tokens.TokenIncrement
 	l.DoubleChar[[2]rune{'-', '-'}] = tokens.TokenDecrement
 }
@@ -58,10 +56,12 @@ func (l *Lexer) InitKeywords() {
 	l.KeyWords["sub"] = tokens.TokenSub
 	l.KeyWords["with"] = tokens.TokenWith
 	l.KeyWords["mod"] = tokens.TokenMod
+	l.KeyWords["export"] = tokens.TokenExport
 	l.KeyWords["import"] = tokens.TokenImport
 	l.KeyWords["return"] = tokens.TokenReturn
 	l.KeyWords["break"] = tokens.TokenBreak
 	l.KeyWords["continue"] = tokens.TokenContinue
+	l.KeyWords["raise"] = tokens.TokenRaise
 	l.KeyWords["enum"] = tokens.TokenEnum
 	l.KeyWords["and"] = tokens.TokenAnd
 	l.KeyWords["or"] = tokens.TokenOr

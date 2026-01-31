@@ -91,22 +91,24 @@ func (l *Lexer) GetNumber(pos pos.Pos, first rune) (tokens.Token, error) {
 		}
 	}
 	ok := true
-	next := first
 	var sb strings.Builder
-	for ; ok && (isDigitInBase(next, base) || next == '_'); next, ok = l.Next() {
+	sb.WriteRune(first)
+	for next, ok := l.Peek(0); ok && (isDigitInBase(next, base) || next == '_'); next, ok = l.Peek(0) {
+		l.Next()
 		if next == '_' {
 			continue
 		}
 		sb.WriteRune(next)
 	}
-	next, ok = l.Peek(0)
+	next, ok := l.Peek(0)
 	if !ok {
 		return getNumToken(pos, sb.String(), base), nil
 	}
 	if next == '.' {
 		l.Next()
 		sb.WriteRune('.')
-		for next, ok = l.Next(); ok && (isDigitInBase(next, base) || next == '_'); next, ok = l.Next() {
+		for next, ok = l.Peek(0); ok && (isDigitInBase(next, base) || next == '_'); next, ok = l.Peek(0) {
+			l.Next()
 			if next == '_' {
 				continue
 			}
@@ -118,9 +120,10 @@ func (l *Lexer) GetNumber(pos pos.Pos, first rune) (tokens.Token, error) {
 
 func (l *Lexer) GetIdent(pos pos.Pos, first rune) (tokens.Token, error) {
 	ok := true
-	next := first
 	var sb strings.Builder
-	for ; ok && (unicode.IsLetter(next) || unicode.IsDigit(next) || next == '_'); next, ok = l.Next() {
+	sb.WriteRune(first)
+	for next, ok := l.Peek(0); ok && (unicode.IsLetter(next) || unicode.IsDigit(next) || next == '_'); next, ok = l.Peek(0) {
+		l.Next()
 		sb.WriteRune(next)
 	}
 	res := sb.String()

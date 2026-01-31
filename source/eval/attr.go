@@ -21,15 +21,12 @@ func GetAttr(value *object.Value, name string, pos pos.Pos) object.ExpressionRes
 			Trace: stacktrace.New(pos),
 		}
 	}
-	if attr, ok := obj.Map[name]; ok {
-		return object.ExpressionResult{SignalVal: attr.Normalize(), Trace: stacktrace.New(pos)}
+
+	if _, ok := obj.Map[name]; !ok {
+		obj.Map[name] = &object.Value{InnerValue: object.Null{}}
+
 	}
-	return object.ExpressionResult{Signal: signal.SignalRaise, SignalVal: &object.Value{
-		InnerValue: object.Error{
-			Code:    errors.ValueError,
-			Message: fmt.Sprintf("attribute %v not found", name),
-		}}, Trace: stacktrace.New(pos),
-	}
+	return object.ExpressionResult{SignalVal: obj.Map[name].Normalize(), Trace: stacktrace.New(pos)}
 }
 
 func GetAttrMethod(value *object.Value, name string, pos pos.Pos) object.ExpressionResult {

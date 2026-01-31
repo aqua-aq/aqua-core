@@ -39,7 +39,7 @@ func (s Signal) Has() bool {
 }
 
 func (s Signal) IntoSubroutineSignal() (SubroutineSignal, bool) {
-	return s == SignalRaise, s == SignalRaise || s == SignalReturn
+	return s == SignalRaise, s == SignalRaise || s == SignalReturn || s == SignalNone
 }
 
 func (s SubroutineSignal) IntoSignal() Signal {

@@ -15,12 +15,8 @@ func DeclareSubroutine(vm *vm.VM, scope scope.Scope[*object.Value], clone bool, 
 		if res.Signal.Has() {
 			return res.Clone(clone)
 		}
-		name, expr := IdentExpression(arg.Name).GetName(vm, scope, arg.Pos)
-		if expr.Signal.Has() {
-			return expr.Clone(clone)
-		}
 		arguments.Elements = append(arguments.Elements, object.Argument{
-			Name:    name,
+			Name:    arg.Name.Ident,
 			Default: res.SignalVal.Normalize(),
 		})
 	}

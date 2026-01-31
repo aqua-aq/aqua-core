@@ -62,6 +62,7 @@ a = 30
 begin 
     a++
 end
+
 # a is 31
 
 a = begin
@@ -75,13 +76,13 @@ end # a = 47
 let a = [10, "Hello", true, null] # creating an array
 a[1] = "World" # changing an array value
 a = a + 10 # adding an element to an array
-a = a-- # removing an element from the array
+a-- # removing an element from the array
 
 # slicing
-let slice = a[1..]
-slice = a[..2]
-slice = a[1..2] # getting a slice of an array
-slice = a[..] # copying an array
+# let slice = a[1..]
+# slice = a[..2]
+# slice = a[1..2] # getting a slice of an array
+# slice = a[..] # copying an array
 
 # opening arrays
 let b = [...a, 1, 2, 3, 4, 5] # adding all elements of a to b
@@ -91,7 +92,7 @@ a = [10, true]
 
 # comparing
 a = 10 in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] # true
-a = 10 in 0..9 # false
+# a = 10 in 0..9 # false
 
 # objects
 
@@ -109,20 +110,20 @@ a. `any string` = 10 # adding a new no name control property
 
 b = {
     birthday: "may 3", 
-    ...a, # adding all properties of a to b
+    ...a # adding all properties of a to b
 }
 
 let name = "alice"
 let people = {
-    @name {
+    #- @name {
         age: 10
-    }
+    } -#
     peter: {
         age: 14
     }
 }
 name = "sam"
-people.@name = {age: 28}
+# people.@name = {age: 28}
 
 # conditions
 
@@ -152,35 +153,36 @@ a = if a == 10 "ten" else "unknown" end
 
 # for in loop
 
-a = 0
-for i in 0..10
-    a += i
-end
+# a = 0
+# for i in 0..10
+#     a += i
+# end
 
 a = ""
 for i in ["Hello", "World"]
     a += i
 end
 
-count = 0
-s = ""
+let count = 0
+let s = ""
 for i, c in enum ["a", "b", "c", "d"]
     count += i
     s += c
 end
-
+print(count)
 # for in with objects
 
 count = 0
+print(typeof 0)
 for k, v in {
-    peter: 10
-    alice: 17
-    heinz: 39
+    peter: 10,
+    alice: 17,
+    heinz: 39,
     robert: 20
 }
     if v >= 18 count++ end
 end
-
+print(count)
 # while loop 
 
 a = 0
@@ -189,7 +191,7 @@ while a < 10
 end
 
 a = 0
-i = 0
+let i = 0
 while i < 10 : i++ # here it does it before each iteration (useless)
     a += i
 end
@@ -208,9 +210,9 @@ repeat
 until i >= 10 : i ++ # here it does it after each iteration
 
 # break/continue
-for i in 0..10
-    if i == 5 break end
-end
+#for i in 0..10
+#     if i == 5 break end
+# end
 
 a = 0
 for i in 0..10
@@ -222,47 +224,47 @@ end
 
 a = 10
 a = while a < 100 : a ++
-    if a % 10 == 3 break a * 10 
-    elif a / 2 > 37 break a * 3 end
+    if a % 10 == 3 break: a * 10 
+    elif a / 2 > 37 break: a * 3 end
 end # if finishes without breaking a will be null
 
 a = while a < 100 : a ++
-    if a == 37 break true end
+    if a == 37 break: true end
 else
     false
 end
 a = 10
 a = repeat
-    if a < 10 break true end
+    if a < 10 break: true end
 else 
     false
 until a >= 20 : a ++
 
 # subroutines
 
-sub add(a, b) return a + b end
+sub add(a, b) return: a + b end
 a = add(10, 20)
 
 sub map(s) 
     for i, v in enum it
         it[i] = s(v)
     end
-    return it
+    return: it
 end
 
-a = [1, 2, 3, 4, 5]->map((v) => v * 2) # binding it
+a = [1, 2, 3, 4, 5]->map (sub (v) return: v * 2 end)# binding it
 
 sub push(array, values...)
-    return [...array, ...values]
+    return: [...array, ...values]
 end
 
 a = push([1, 2, 4, 5, 5, 6], 2)
-a = push(a, a...)
+a = push(a, ...a)
 
 # more closures
 
 a = 10
-b = (v) => a + v
+b = sub (v) return: a + v end
 a = b(20) # 30
 a = b(10) # 40
 
@@ -270,26 +272,27 @@ a = sub (array, p)
     for v in array
         array[v] = p(v)
     end
-    return array
+    return: array
 end
 
 b = [1, 2, 3, 4, 5]
-a(b, (v) => v * 2) # [2, 4, 6, 8, 10]
+a(b, sub (v) return: v * 2 end) # [2, 4, 6, 8, 10]
 
 # constructors
 sub Person(name, age)
+    it = {}
     it.name = name
     it.age = age
-end
+end 
 
 a = Person("Alice", 10)
 
 sub Person(name, age)
     it.name = name
-    if age ~= null then it.age = age end
+    if age ~= null it.age = age end
 with {
     age: 10, # default
-    sub greet() return "Hello, My name is @{it.name}" end
+    sub greet() return: "Hello, My name is @{it.name}" end
 }
 
 
@@ -299,11 +302,11 @@ a.>greet() # Hello, My name is Alice
 # exceptions
 
 sub divide(a, b) 
-    if a == 0 then raise "Cannot divide by zero" end
-    return a / b
+    if a == 0 raise: "Cannot divide by zero" end
+    return: a / b
 end
 
-a = begin divide(1, 0) catch e then infinity end # infinity
+a = begin divide(1, 0) catch e infinity end # infinity
 # if we do not catch exception, it will be thrown to the top level
 
 # references
@@ -317,9 +320,8 @@ inc(&a) # a == 11
 
 mod math
     sub add(a, b) 
-        return a + b
+        return: a + b
     end
-end
+export math
 
 a = math.add(10, 20) # 30
-# modules are just global objects 

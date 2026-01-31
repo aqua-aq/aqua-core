@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/vandi37/aqua/pkg/pos"
+	"github.com/vandi37/aqua/source/operators"
 )
 
 type Token struct {
@@ -12,7 +13,7 @@ type Token struct {
 	NumValue float64
 	Pos      pos.Pos
 }
-type TokenType uint16
+type TokenType byte
 
 const (
 	TokenEof TokenType = iota
@@ -33,11 +34,13 @@ const (
 	TokenSub
 	TokenWith
 	TokenMod
+	TokenExport
 	TokenImport
 	TokenAs
 	TokenReturn
 	TokenBreak
 	TokenContinue
+	TokenRaise
 	TokenEnum
 
 	TokenAnd
@@ -70,14 +73,12 @@ const (
 
 	TokenAssign
 	TokenDots // ...
-	TokenAt
 	TokenPtr
 	TokenColumn
 	TokenDot
 	TokenMethod
 	TokenBind
 	TokenComma
-	TokenArrow // =>
 
 	TokenParenthesisOpened
 	TokenParenthesisClosed
@@ -126,6 +127,8 @@ func (t TokenType) String() string {
 		return "<with>"
 	case TokenMod:
 		return "<mod>"
+	case TokenExport:
+		return "<export>"
 	case TokenImport:
 		return "<import>"
 	case TokenAs:
@@ -136,6 +139,8 @@ func (t TokenType) String() string {
 		return "<break>"
 	case TokenContinue:
 		return "<continue>"
+	case TokenRaise:
+		return "<raise>"
 	case TokenEnum:
 		return "<enum>"
 	case TokenAnd:
@@ -192,8 +197,6 @@ func (t TokenType) String() string {
 		return "<assign>"
 	case TokenDots:
 		return "<dots>"
-	case TokenAt:
-		return "<at>"
 	case TokenPtr:
 		return "<ptr>"
 	case TokenColumn:
@@ -206,8 +209,6 @@ func (t TokenType) String() string {
 		return "<bind>"
 	case TokenComma:
 		return "<comma>"
-	case TokenArrow:
-		return "<arrow>"
 	case TokenParenthesisOpened:
 		return "<parenthesis opened>"
 	case TokenParenthesisClosed:
@@ -237,10 +238,83 @@ func (t TokenType) String() string {
 }
 
 func (t Token) String() string {
+	if t.Value == "" {
+		return fmt.Sprintf(
+			"%s at %s",
+			t.Type.String(),
+			t.Pos.String(),
+		)
+	}
 	return fmt.Sprintf(
 		"%s: \"%s\" at %s",
 		t.Type.String(),
 		t.Value,
 		t.Pos.String(),
 	)
+}
+
+func (t TokenType) IntoPrefix() (operators.PrefixOperator, bool) {
+	switch t {
+	case TokenNot:
+		return operators.Not, true
+	case TokenTypeof:
+		return operators.Typeof, true
+	case TokenMinus:
+		return operators.Neg, true
+	case TokenPtr:
+		return operators.Ptr, true
+	default:
+		return 0, false
+	}
+}
+
+func (t TokenType) IntoBin() (operators.Operator, bool) {
+	switch t {
+	case TokenAnd:
+		return operators.And, true
+	case TokenOr:
+		return operators.Or, true
+	case TokenXor:
+		return operators.Xor, true
+	case TokenIn:
+		return operators.In, true
+	case TokenPlus:
+		return operators.Plus, true
+	case TokenMinus:
+		return operators.Minus, true
+	case TokenMultiply:
+		return operators.Multiply, true
+	case TokenDivide:
+		return operators.Divide, true
+	case TokenModulus:
+		return operators.Modulo, true
+	case TokenStrongDivide:
+		return operators.StrongDivide, true
+	case TokenShl:
+		return operators.Shl, true
+	case TokenShr:
+		return operators.Shr, true
+	case TokenEq:
+		return operators.Equal, true
+	case TokenNotEq:
+		return operators.NotEqual, true
+	case TokenGt:
+		return operators.Greater, true
+	case TokenLt:
+		return operators.Less, true
+	case TokenGe:
+		return operators.GreaterEqual, true
+	case TokenLe:
+		return operators.LessEqual, true
+	case TokenDot:
+		return operators.Dot, true
+	case TokenMethod:
+		return operators.Method, true
+	case TokenBind:
+		return operators.Bind, true
+	case TokenSquareBracketOpened:
+		return operators.Index, true
+	default:
+		return 0, false
+	}
 }

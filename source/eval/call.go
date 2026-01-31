@@ -12,7 +12,7 @@ import (
 	"github.com/vandi37/aqua/source/vm"
 )
 
-func Call(vm *vm.VM, sub *object.Value, args []*object.Value, clone bool, pos pos.Pos) object.ExpressionResult {
+func Call(vm *vm.VM, sub *object.Value, args []*object.Value, clone bool, pos pos.Pos, export map[string]*object.Value) object.ExpressionResult {
 	method, ok := sub.Normalize().InnerValue.(object.Method)
 	if !ok {
 		subroutine, ok := sub.Normalize().InnerValue.(*object.Subroutine)
@@ -27,7 +27,7 @@ func Call(vm *vm.VM, sub *object.Value, args []*object.Value, clone bool, pos po
 		}
 		method = object.Method{
 			Subroutine: subroutine,
-			It:         subroutine.Prototype.Clone(),
+			It:         subroutine.Prototype.Normalize().Clone(),
 		}
 	}
 
@@ -39,7 +39,7 @@ func Call(vm *vm.VM, sub *object.Value, args []*object.Value, clone bool, pos po
 		res.Trace = res.Trace.Add(method.Subroutine.Name, pos)
 		return res
 	}
-	res := BlockExpression(method.Subroutine.Code).Eval(vm, subScope, clone)
+	res := RunBlock(BlockExpression(method.Subroutine.Code), vm, subScope, clone, export)
 	res.Trace = res.Trace.Add(method.Subroutine.Name, pos)
 	subRes, ok := res.IntoSubroutineResult()
 	if !ok {

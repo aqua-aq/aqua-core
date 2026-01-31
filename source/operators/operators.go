@@ -1,6 +1,9 @@
 package operators
 
-import "github.com/vandi37/aqua/source/keywords"
+import (
+	"github.com/vandi37/aqua/source/keywords"
+	"github.com/vandi37/aqua/source/power"
+)
 
 type Operator byte
 
@@ -182,5 +185,32 @@ func (o PrefixOperator) Method() string {
 		return keywords.Dec
 	default:
 		return ""
+	}
+}
+
+func (o Operator) Power() power.BindingPower {
+	switch o {
+	case Or:
+		return power.PowerOr
+	case And:
+		return power.PowerAnd
+	case Xor:
+		return power.PowerXor
+	case Plus, Minus:
+		return power.PowerAdditive
+	case Multiply, Divide, Modulo, StrongDivide:
+		return power.PowerMultiplicative
+	case Equal, NotEqual:
+		return power.PowerEquality
+	case Greater, Less, GreaterEqual, LessEqual, In:
+		return power.PowerComparison
+	case Shr, Shl:
+		return power.PowerShift
+	case Bind:
+		return power.PowerBind
+	case Index, Dot, Method:
+		return power.PowerPostfix
+	default:
+		return power.PowerLowest
 	}
 }

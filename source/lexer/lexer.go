@@ -55,6 +55,13 @@ func (l *Lexer) NextToken() (tokens.Token, error) {
 
 	second, ok := l.Peek(0)
 	if ok {
+		chars := [2]rune{first, second}
+		t, ok := l.DoubleChar[chars]
+		if ok {
+			l.Next()
+			return tokens.Token{Type: t, Value: string(chars[:]), Pos: pos}, nil
+		}
+
 		third, ok := l.Peek(1)
 		if ok {
 			chars := [3]rune{first, second, third}
@@ -65,12 +72,7 @@ func (l *Lexer) NextToken() (tokens.Token, error) {
 				return tokens.Token{Type: t, Value: string(chars[:]), Pos: pos}, nil
 			}
 		}
-		chars := [2]rune{first, second}
-		t, ok := l.DoubleChar[chars]
-		if ok {
-			l.Next()
-			return tokens.Token{Type: t, Value: string(chars[:]), Pos: pos}, nil
-		}
+
 	}
 	t, ok := l.OneChar[first]
 	if !ok {

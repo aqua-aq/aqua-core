@@ -47,7 +47,7 @@ func RunBin(
 			if expr.Signal.Has() {
 				return expr.Clone(clone)
 			}
-			return Call(vm, expr.SignalVal, []*object.Value{left.Normalize()}, clone, pos).Clone(clone)
+			return Call(vm, expr.SignalVal, []*object.Value{left.Normalize()}, clone, pos, nil).Clone(clone)
 		}
 		switch right.Normalize().InnerValue.(type) {
 		case *object.Subroutine, object.Method:
@@ -60,7 +60,7 @@ func RunBin(
 			if expr.Signal.Has() {
 				return expr.Clone(clone)
 			}
-			return Call(vm, expr.SignalVal, []*object.Value{left.Normalize()}, clone, pos).Clone(clone)
+			return Call(vm, expr.SignalVal, []*object.Value{left.Normalize()}, clone, pos, nil).Clone(clone)
 		}
 		switch r := right.Normalize().InnerValue.(type) {
 		case object.Array:
@@ -85,7 +85,7 @@ func RunBin(
 		if expr.Signal.Has() {
 			return expr.Clone(clone)
 		}
-		return Call(vm, expr.SignalVal, []*object.Value{right.Normalize()}, clone, pos).Clone(clone)
+		return Call(vm, expr.SignalVal, []*object.Value{right.Normalize()}, clone, pos, nil).Clone(clone)
 	}
 
 	if operator == operators.Equal {
