@@ -9,14 +9,14 @@ import (
 func (p *Parser) ParseArguments() (ast.Arguments, error) {
 	var res ast.Arguments
 	for {
-		if peek, _ := p.Peek(); peek.Type != tokens.TokenIdentifier {
+		if peek, _ := p.Peek(0); peek.Type != tokens.TokenIdentifier {
 			return res, nil
 		}
 		ident, err := p.Expect(tokens.TokenIdentifier)
 		if err != nil {
 			return ast.Arguments{}, err
 		}
-		peek, ok := p.Peek()
+		peek, ok := p.Peek(0)
 		if !ok {
 			return res, nil
 		}
@@ -32,7 +32,7 @@ func (p *Parser) ParseArguments() (ast.Arguments, error) {
 			if err != nil {
 				return ast.Arguments{}, err
 			}
-			peek, ok = p.Peek()
+			peek, ok = p.Peek(0)
 			if !ok {
 				return res, nil // the next step will think about it
 			}

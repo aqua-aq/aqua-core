@@ -13,12 +13,12 @@ func (p *Parser) ParseBlockExpression(
 	endings[tokens.TokenCatch] = struct{}{}
 	pos := p.pos
 	expressions := []ast.Expression{}
-	peek, ok := p.Peek()
+	peek, ok := p.Peek(0)
 	isEnding := func() bool {
 		_, ok := endings[peek.Type]
 		return ok
 	}
-	for ; ok && !isEnding(); peek, ok = p.Peek() {
+	for ; ok && !isEnding(); peek, ok = p.Peek(0) {
 		expr, err := p.Expression(power.PowerLowest, false)
 		if err != nil {
 			return tokens.TokenEof, ast.BlockExpression{}, err
@@ -129,7 +129,7 @@ func (p *Parser) ParseForExpression() (ast.ForExpression, error) {
 	if err != nil {
 		return ast.ForExpression{}, err
 	}
-	peek, ok := p.Peek()
+	peek, ok := p.Peek(0)
 	if !ok {
 		return ast.ForExpression{}, UnexpectedEof(p.pos)
 	}
@@ -176,7 +176,7 @@ func (p *Parser) ParseWhileExpression() (ast.WhileExpression, error) {
 		return ast.WhileExpression{}, err
 	}
 	var after ast.Expression
-	if peek, ok := p.Peek(); ok && peek.Type == tokens.TokenColumn {
+	if peek, ok := p.Peek(0); ok && peek.Type == tokens.TokenColumn {
 		p.Move()
 		after, err = p.Expression(power.PowerLowest, false)
 		if err != nil {
@@ -234,7 +234,7 @@ func (p *Parser) ParseRepeatUntilExpression() (ast.WhileExpression, error) {
 		return ast.WhileExpression{}, err
 	}
 	var after ast.Expression
-	if peek, ok := p.Peek(); ok && peek.Type == tokens.TokenColumn {
+	if peek, ok := p.Peek(0); ok && peek.Type == tokens.TokenColumn {
 		p.Move()
 		after, err = p.Expression(power.PowerLowest, false)
 		if err != nil {
@@ -258,7 +258,7 @@ func (p *Parser) ParseUsingExpression() (ast.UsingExpression, error) {
 		return ast.UsingExpression{}, err
 	}
 	var name *ast.IdentExpression
-	if peek, ok := p.Peek(); ok && peek.Type == tokens.TokenAs {
+	if peek, ok := p.Peek(0); ok && peek.Type == tokens.TokenAs {
 		p.Move()
 		ident, err := p.Expect(tokens.TokenIdentifier)
 		if err != nil {
@@ -288,7 +288,7 @@ func (p *Parser) ParseUsingExpression() (ast.UsingExpression, error) {
 func (p *Parser) ParseSubroutineExpression() (ast.SubroutineDec, error) {
 	pos := p.pos
 	var ident *ast.IdentExpression
-	if peek, ok := p.Peek(); ok && peek.Type == tokens.TokenIdentifier {
+	if peek, ok := p.Peek(0); ok && peek.Type == tokens.TokenIdentifier {
 		p.Move()
 		ident = &ast.IdentExpression{
 			Ident: peek.Value,
@@ -348,8 +348,8 @@ func (p *Parser) ParseModule() (ast.ModExpression, error) {
 		return ast.ModExpression{}, err
 	}
 	export := []string{firstExport.Value}
-	peek, ok := p.Peek()
-	for ; ok && peek.Type == tokens.TokenComma; peek, ok = p.Peek() {
+	peek, ok := p.Peek(0)
+	for ; ok && peek.Type == tokens.TokenComma; peek, ok = p.Peek(0) {
 		p.Move()
 		next, err := p.Expect(tokens.TokenIdentifier)
 		if err != nil {
@@ -370,7 +370,7 @@ func (p *Parser) ParseModule() (ast.ModExpression, error) {
 func (p *Parser) ParseSignalExpression(signal signal.Signal) (ast.SignalExpression, error) {
 	pos := p.pos
 	var expr ast.Expression = ast.NullDec{Pos: pos}
-	if peek, ok := p.Peek(); ok && peek.Type == tokens.TokenColumn {
+	if peek, ok := p.Peek(0); ok && peek.Type == tokens.TokenColumn {
 		p.Move()
 		var err error
 		expr, err = p.Expression(power.PowerLowest, false)

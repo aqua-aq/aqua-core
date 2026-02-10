@@ -15,7 +15,7 @@ func (p *Parser) ParseImportExpression() (ast.ImportExpression, error) {
 		return ast.ImportExpression{}, err
 	}
 	var name *ast.IdentExpression
-	if peek, ok := p.Peek(); ok && peek.Type == tokens.TokenAs {
+	if peek, ok := p.Peek(0); ok && peek.Type == tokens.TokenAs {
 		p.Move()
 		ident, err := p.Expect(tokens.TokenIdentifier)
 		if err != nil {
@@ -42,7 +42,7 @@ func (p *Parser) ParseArrayDeclaration(end tokens.TokenType) ([]ast.ArrayElement
 			return nil, UnexpectedEof(p.pos)
 		}
 		curPos := p.tokens[0].Pos
-		if peek, ok := p.Peek(); ok && peek.Type == tokens.TokenDots {
+		if peek, ok := p.Peek(0); ok && peek.Type == tokens.TokenDots {
 			p.Move()
 			isContinuos = true
 		} else if peek.Type == end {
@@ -57,7 +57,7 @@ func (p *Parser) ParseArrayDeclaration(end tokens.TokenType) ([]ast.ArrayElement
 			Value:       expr,
 			IsContinuos: isContinuos,
 		})
-		if peek, ok := p.Peek(); !ok || peek.Type != tokens.TokenComma {
+		if peek, ok := p.Peek(0); !ok || peek.Type != tokens.TokenComma {
 			break
 		}
 		p.Move()
@@ -73,7 +73,7 @@ func (p *Parser) ParseObjectDeclaration() (ast.ObjectDec, error) {
 	pos := p.pos
 	var vals []ast.ObjectVal
 	for {
-		if peek, ok := p.Peek(); ok && peek.Type == tokens.TokenDots {
+		if peek, ok := p.Peek(0); ok && peek.Type == tokens.TokenDots {
 			p.Move()
 			expr, err := p.Expression(power.PowerAssignment, false)
 			if err != nil {
@@ -123,7 +123,7 @@ func (p *Parser) ParseObjectDeclaration() (ast.ObjectDec, error) {
 				Pos:   ident.Pos,
 			})
 		}
-		if peek, ok := p.Peek(); !ok || peek.Type != tokens.TokenComma {
+		if peek, ok := p.Peek(0); !ok || peek.Type != tokens.TokenComma {
 			break
 		}
 		p.Move()

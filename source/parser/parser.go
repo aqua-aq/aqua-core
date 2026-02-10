@@ -64,11 +64,11 @@ func (p *Parser) Next() (tokens.Token, bool) {
 	p.Move()
 	return next, true
 }
-func (p *Parser) Peek() (tokens.Token, bool) {
-	if len(p.tokens) == 0 {
+func (p *Parser) Peek(n int) (tokens.Token, bool) {
+	if len(p.tokens) <= n {
 		return tokens.Token{}, false
 	}
-	return p.tokens[0], true
+	return p.tokens[n], true
 }
 
 func (p *Parser) Expect(token tokens.TokenType) (tokens.Token, error) {

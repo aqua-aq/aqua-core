@@ -49,7 +49,7 @@ func Run(path, name string, vm *vm.VM[*object.Value]) (map[string]*object.Value,
 			return nil, err
 		}
 		export = append(export, firstExport.Value)
-		for peek, ok := parser.Peek(); ok && peek.Type == tokens.TokenComma; peek, ok = parser.Peek() {
+		for peek, ok := parser.Peek(0); ok && peek.Type == tokens.TokenComma; peek, ok = parser.Peek(0) {
 			parser.Move()
 			next, err := parser.Expect(tokens.TokenIdentifier)
 			if err != nil {

@@ -1,13 +1,20 @@
-sub a()
-    raise: "some error"
-end
+sub Range(max)
+    it.max = max
+with {
+    current: 0,
+    sub next() 
+        if it.current >= it.max 
+            raise: stop
+        end
+        let current = it.current
+        it.current++
+        return: current
+    end,
+    sub __iter__() 
+        return: it.>next
+    end
+}
 
-sub b()
-    a()
+for i in Range(10)
+    println(i)
 end
-
-sub c() 
-    b()
-end
-
-c()

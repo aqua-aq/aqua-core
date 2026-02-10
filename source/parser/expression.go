@@ -14,7 +14,7 @@ func (p *Parser) Expression(bp power.BindingPower, isBind bool) (ast.Expression,
 	}
 
 	for {
-		peek, ok := p.Peek()
+		peek, ok := p.Peek(0)
 		if !ok {
 			break
 		}
@@ -23,7 +23,7 @@ func (p *Parser) Expression(bp power.BindingPower, isBind bool) (ast.Expression,
 				break
 			}
 			leftArray := []ast.Expression{left}
-			for ; peek.Type == tokens.TokenComma; peek, ok = p.Peek() {
+			for ; peek.Type == tokens.TokenComma; peek, ok = p.Peek(0) {
 				p.Move()
 				expr, err := p.Expression(power.PowerAssignment, false)
 				if err != nil {
@@ -41,7 +41,7 @@ func (p *Parser) Expression(bp power.BindingPower, isBind bool) (ast.Expression,
 				return nil, err
 			}
 			rightArray := []ast.Expression{expr}
-			for peek, ok = p.Peek(); peek.Type == tokens.TokenComma; peek, ok = p.Peek() {
+			for peek, ok = p.Peek(0); peek.Type == tokens.TokenComma; peek, ok = p.Peek(0) {
 				p.Move()
 				expr, err := p.Expression(power.PowerAssignment, false)
 				if err != nil {
@@ -72,14 +72,13 @@ func (p *Parser) Expression(bp power.BindingPower, isBind bool) (ast.Expression,
 			}
 		} else if bin, ok := peek.Type.IntoBin(); ok {
 			pos := p.pos
-			p.Move()
-			if peek, ok = p.Peek(); ok &&
+			if peek, ok = p.Peek(1); ok &&
 				bin.IsValidInAssign() &&
 				peek.Type == tokens.TokenAssign {
 				if bp >= power.PowerAssignment {
 					break
 				}
-				p.Move()
+				p.MoveN(2)
 				right, err := p.Expression(power.PowerAssignment, false)
 				if err != nil {
 					return nil, err
@@ -93,6 +92,7 @@ func (p *Parser) Expression(bp power.BindingPower, isBind bool) (ast.Expression,
 				if bp >= bin.Power() {
 					break
 				}
+				p.Move()
 				right, err := p.Expression(bin.Power(), bin == operators.Bind)
 				if err != nil {
 					return nil, err
