@@ -23,17 +23,8 @@ type VM[T any] struct {
 	Config config.Config
 }
 
-func New[T any](path string, paths *Paths[T], libVms *VMs[T], run func(path, name string, vm *VM[T]) (map[string]T, error)) (*VM[T], error) {
-	file, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-	config, err := config.NewConfig(file)
-	if err != nil {
-		return nil, err
-	}
-	err = ResolveDependencies(config.Dependencies)
+func New[T any](config config.Config, paths *Paths[T], libVms *VMs[T], run func(path, name string, vm *VM[T]) (map[string]T, error)) (*VM[T], error) {
+	err := ResolveDependencies(config.Dependencies)
 	if err != nil {
 		return nil, err
 	}
@@ -49,11 +40,24 @@ func New[T any](path string, paths *Paths[T], libVms *VMs[T], run func(path, nam
 
 func ResolveDependencies(dependencies map[string]string) error {
 	for k, v := range dependencies {
-		abs, err := filepath.Abs(filepath.Join(env.AQUA_PATH, v))
+		abs, err := filepath.Abs(filepath.Join(env.AQUA_PATH, env.LIB_PATH, v))
 		if err != nil {
 			return err
 		}
 		dependencies[k] = abs
 	}
 	return nil
+}
+
+func NewAndLoadConfig[T any](path string, paths *Paths[T], libVms *VMs[T], run func(path, name string, vm *VM[T]) (map[string]T, error)) (*VM[T], error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	config, err := config.NewConfig(file)
+	if err != nil {
+		return nil, err
+	}
+	return New(config, paths, libVms, run)
 }

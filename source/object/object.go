@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"maps"
 	"slices"
+	"sort"
 	"strings"
 
 	"github.com/vandi37/aqua/pkg/scope"
@@ -71,7 +72,24 @@ func (o Object) Clone() *Value {
 }
 func (Object) Type() Type { return TypeObject }
 func (o Object) String() string {
-	return fmt.Sprintf("%v", o.Map)
+	keys := make([]string, 0, len(o.Map))
+	for k := range o.Map {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	var b strings.Builder
+	b.WriteString("{")
+
+	for i, k := range keys {
+		fmt.Fprintf(&b, "%s: %s", k, o.Map[k].Normalize().String())
+		if i < len(keys)-1 {
+			b.WriteString(", ")
+		}
+	}
+
+	b.WriteString("}")
+	return b.String()
 }
 func (o Object) Equals(value *Value) bool {
 	if obj, ok := value.Normalize().InnerValue.(Object); ok {
@@ -143,7 +161,7 @@ func (s String) Clone() *Value {
 	return &Value{s}
 }
 func (String) Type() Type       { return TypeString }
-func (s String) String() string { return fmt.Sprintf("\"%v\"", s.Value) }
+func (s String) String() string { return fmt.Sprintf("%v", s.Value) }
 func (s String) Equals(value *Value) bool {
 	if str, ok := value.Normalize().InnerValue.(String); ok {
 		return s == str
@@ -172,7 +190,19 @@ func (a Array) Clone() *Value {
 }
 func (Array) Type() Type { return TypeArray }
 func (a Array) String() string {
-	return fmt.Sprintf("%v", a.Elements)
+	var b strings.Builder
+	b.WriteString("[")
+
+	for i, v := range a.Elements {
+		b.WriteString(v.Normalize().String())
+
+		if i < len(a.Elements)-1 {
+			b.WriteString(", ")
+		}
+	}
+
+	b.WriteString("]")
+	return b.String()
 }
 func (a Array) Equals(value *Value) bool {
 	if arr, ok := value.Normalize().InnerValue.(Array); ok {

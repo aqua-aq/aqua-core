@@ -34,9 +34,9 @@ func (s StackTrace) IsEmpty() bool {
 
 func (s StackTrace) String() string {
 	b := strings.Builder{}
-	fmt.Fprintf(&b, "	at %s", s.first.String())
+	fmt.Fprintf(&b, "\tat %s", s.first.String())
 	for _, v := range s.frames {
-		fmt.Fprintf(&b, "	at %s (%s)", v.Func, v.Pos.String())
+		fmt.Fprintf(&b, "\n\tat %s (%s)", v.Func, v.Pos.String())
 	}
 	return b.String()
 }

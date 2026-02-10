@@ -112,11 +112,12 @@ func (p *Parser) Expression(bp power.BindingPower, isBind bool) (ast.Expression,
 				}
 			}
 		} else if peek.Type == tokens.TokenIncrement || peek.Type == tokens.TokenDecrement {
-			p.Move()
-			pos := p.pos
 			if bp >= power.PowerPostfix {
 				break
 			}
+			p.Move()
+			pos := p.pos
+
 			operator := operators.Inc
 			if peek.Type == tokens.TokenDecrement {
 				operator = operators.Dec

@@ -46,7 +46,7 @@ func (s SubroutineSignal) IntoSignal() Signal {
 	if s {
 		return SignalRaise
 	}
-	return SignalReturn
+	return SignalNone
 }
 
 func (s SubroutineSignal) String() string {

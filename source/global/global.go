@@ -62,7 +62,7 @@ func Print(ln bool, name string) func(vm *vm.VM[*object.Value], scope scope.Scop
 		if ln {
 			b.WriteRune('\n')
 		}
-		fmt.Println(b.String())
+		fmt.Print(b.String())
 		return object.SubroutineResult{Trace: stacktrace.New(pos.BuildInPos(name))}
 	}
 }
@@ -85,7 +85,7 @@ func Input(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value]) object.Su
 	if sErr, _ := err.IntoSubroutineResult(); err.Signal.Has() {
 		return sErr
 	}
-	fmt.Println(str)
+	fmt.Print(str)
 	var s string
 	fmt.Scanln(&s)
 	return object.SubroutineResult{SignalVal: &object.Value{InnerValue: object.String{Value: s}}, Trace: stacktrace.New(pos.BuildInPos("input"))}

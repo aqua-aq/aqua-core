@@ -34,27 +34,27 @@ func Call(vm *vm.VM[*object.Value], sub *object.Value, args []*object.Value, clo
 	subScope := method.Subroutine.Scope.Push()
 	subScope.Set(keywords.It, method.It.Normalize())
 	object.ParseArgs(method.Subroutine.Arguments, args, subScope)
+	var res object.SubroutineResult
 	if method.Subroutine.BuildIn != nil {
-		res := method.Subroutine.BuildIn(vm, subScope).AsExpressionResult()
-		res.Trace = res.Trace.Add(method.Subroutine.Name, pos)
-		return res
-	}
-	res := RunBlock(BlockExpression(method.Subroutine.Code), vm, subScope, clone, export)
-	res.Trace = res.Trace.Add(method.Subroutine.Name, pos)
-	subRes, ok := res.IntoSubroutineResult()
-	if !ok {
-		return object.ExpressionResult{Trace: stacktrace.New(pos),
-			Signal: signal.SignalRaise,
-			SignalVal: &object.Value{InnerValue: object.Error{
-				Code:    errors.InvalidSignal,
-				Message: fmt.Sprintf("expected none/return/raise, got %v", res.Signal),
-			}},
+		res = method.Subroutine.BuildIn(vm, subScope)
+	} else {
+		expr := RunBlock(BlockExpression(method.Subroutine.Code), vm, subScope, clone, export)
+		res, ok = expr.IntoSubroutineResult()
+		if !ok {
+			return object.ExpressionResult{Trace: stacktrace.New(pos),
+				Signal: signal.SignalRaise,
+				SignalVal: &object.Value{InnerValue: object.Error{
+					Code:    errors.InvalidSignal,
+					Message: fmt.Sprintf("expected none/return/raise, got %v", res.Signal),
+				}},
+			}
 		}
 	}
-	if subRes.SignalVal.Normalize().IsNull() {
-		return object.ExpressionResult{Signal: subRes.Signal.IntoSignal(), SignalVal: method.It, Trace: subRes.Trace}
+	res.Trace = res.Trace.Add(method.Subroutine.Name, pos)
+	if res.SignalVal.Normalize().IsNull() {
+		return object.ExpressionResult{Signal: res.Signal.IntoSignal(), SignalVal: method.It, Trace: res.Trace}
 	}
-	return subRes.AsExpressionResult()
+	return res.AsExpressionResult()
 }
 
 func Bind(sub, it *object.Value, pos pos.Pos) object.ExpressionResult {

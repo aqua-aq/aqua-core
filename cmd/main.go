@@ -1,31 +1,29 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/vandi37/aqua/source/config"
+	"github.com/vandi37/aqua/source/object"
+	"github.com/vandi37/aqua/source/run"
+	"github.com/vandi37/aqua/source/vm"
 )
 
 func main() {
-	// path := "test.aq"
-	// vm, err := vm.New[*object.Value](".")
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// _, err = run.Run(path, "main", vm)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	file, err := os.Open("config.toml")
+	path := "test.aq"
+	paths := make(vm.Paths[*object.Value])
+	vms := make(vm.VMs[*object.Value])
+	vm, err := vm.New(config.DefaultConfig(),
+		&paths, &vms, run.Run)
 	if err != nil {
-		panic(err)
+		fmt.Fprintln(os.Stderr, err)
+		return
 	}
-	defer file.Close()
+	_, err = run.Run(path, "main", vm)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
 
-	config, err := config.NewConfig(file)
-	if err != nil {
-		panic(err)
-	}
-	spew.Dump(config)
 }

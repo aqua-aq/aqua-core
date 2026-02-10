@@ -30,6 +30,7 @@ const (
 	TokenWhile
 	TokenRepeat
 	TokenUntil
+	TokenUsing
 
 	TokenSub
 	TokenWith
@@ -55,6 +56,7 @@ const (
 	TokenNull
 	TokenInfinity
 	TokenNan
+	TokenStop
 
 	TokenPlus
 	TokenMinus
@@ -129,6 +131,10 @@ func (t TokenType) String() string {
 		return "<mod>"
 	case TokenExport:
 		return "<export>"
+	case TokenStop:
+		return "<stop>"
+	case TokenUsing:
+		return "<using>"
 	case TokenImport:
 		return "<import>"
 	case TokenAs:

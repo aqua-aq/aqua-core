@@ -81,8 +81,8 @@ func (p *Parser) ParseObjectDeclaration() (ast.ObjectDec, error) {
 			}
 			vals = append(vals, ast.ObjectVal{
 				Value:       expr,
-							IsContinuos: true,
-	Pos:         peek.Pos,
+				IsContinuos: true,
+				Pos:         peek.Pos,
 			})
 		} else if peek.Type == tokens.TokenBraceClosed {
 			break
@@ -95,6 +95,7 @@ func (p *Parser) ParseObjectDeclaration() (ast.ObjectDec, error) {
 			if sub.Name == nil {
 				return ast.ObjectDec{}, Expected("subroutine", fmt.Sprintf("anonyms subroutine at %v", sub.Pos))
 			}
+			sub.IsGlobal = false
 			vals = append(vals, ast.ObjectVal{
 				Name:  *sub.Name,
 				Value: sub,

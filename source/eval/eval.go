@@ -8,6 +8,7 @@ import (
 	"github.com/vandi37/aqua/source/ast"
 	"github.com/vandi37/aqua/source/errors"
 	"github.com/vandi37/aqua/source/importing"
+	"github.com/vandi37/aqua/source/keywords"
 	"github.com/vandi37/aqua/source/object"
 	"github.com/vandi37/aqua/source/operators"
 	"github.com/vandi37/aqua/source/signal"
@@ -52,6 +53,8 @@ func IntoEval(expr ast.Expression) Eval {
 		return ForExpression(val)
 	case ast.WhileExpression:
 		return WhileExpression(val)
+	case ast.UsingExpression:
+		return UsingExpression(val)
 	case ast.SignalExpression:
 		return SignalExpression(val)
 	case ast.IdentExpression:
@@ -84,12 +87,37 @@ type (
 	IfExpression        ast.IfExpression
 	ForExpression       ast.ForExpression
 	WhileExpression     ast.WhileExpression
+	UsingExpression     ast.UsingExpression
 	SignalExpression    ast.SignalExpression
 	IdentExpression     ast.IdentExpression
 	AssigmentExpression ast.AssigmentExpression
 	ModExpression       ast.ModExpression
 	ImportExpression    ast.ImportExpression
 )
+
+func (u UsingExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
+	expr := IntoEval(u.Expression).Eval(vm, scope, false)
+	if expr.Signal.Has() {
+		return expr
+	}
+	scope = scope.Push()
+	if u.Name != nil {
+		scope.Set(u.Name.Ident, expr.SignalVal.Normalize())
+	}
+	res := BlockExpression(u.Block).Eval(vm, scope, false)
+
+	if AttrExists(expr.SignalVal.Normalize(), keywords.Dispose) {
+		method := GetAttrMethod(expr.SignalVal.Normalize(), keywords.Dispose, u.Pos)
+		if method.Signal.Has() {
+			return method
+		}
+		expr = Call(vm, method.SignalVal.Normalize(), []*object.Value{}, false, u.Pos, nil)
+		if expr.Signal.Has() {
+			return expr
+		}
+	}
+	return res
+}
 
 func (i ImportExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
 	expr := IntoEval(i.Path).Eval(vm, scope, false)
@@ -608,11 +636,11 @@ func (b BinExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.
 func (o ObjectDec) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
 	obj := make(map[string]*object.Value)
 	for _, val := range o.Vals {
+		res := IntoEval(val.Value).Eval(vm, scope, true)
+		if res.Signal.Has() {
+			return res.Clone(clone)
+		}
 		if val.IsContinuos {
-			res := IntoEval(val.Value).Eval(vm, scope, true)
-			if res.Signal.Has() {
-				return res.Clone(clone)
-			}
 			inner, ok := res.SignalVal.InnerValue.(object.Object)
 			if !ok {
 				return object.ExpressionResult{Trace: stacktrace.New(val.Pos),
@@ -626,12 +654,10 @@ func (o ObjectDec) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Valu
 			for k, v := range inner.Map {
 				obj[k] = v
 			}
-		}
-		res := IntoEval(val.Value).Eval(vm, scope, true)
-		if res.Signal.Has() {
-			return res.Clone(clone)
+			continue
 		}
 		obj[val.Name.Ident] = res.SignalVal.Normalize()
+
 	}
 	return object.ExpressionResult{Trace: stacktrace.New(o.Pos),
 		SignalVal: &object.Value{InnerValue: object.Object{
@@ -641,7 +667,11 @@ func (o ObjectDec) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Valu
 }
 
 func (s SubroutineDec) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
+	name := "<anonymous>"
 	if s.Name != nil {
+		name = s.Name.Ident
+	}
+	if s.Name != nil && s.IsGlobal {
 		sub := DeclareSubroutine(vm, scope, clone, s.Name.Ident, ast.SubroutineDec(s))
 		if sub.Signal.Has() {
 			return sub.Clone(clone)
@@ -649,7 +679,7 @@ func (s SubroutineDec) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.
 		scope.Set(s.Name.Ident, sub.SignalVal.Normalize())
 		return object.ExpressionResult{Trace: stacktrace.New(s.Pos)}
 	}
-	return DeclareSubroutine(vm, scope, clone, "<anonymous>", ast.SubroutineDec(s))
+	return DeclareSubroutine(vm, scope, clone, name, ast.SubroutineDec(s))
 }
 
 func (n NumDec) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {

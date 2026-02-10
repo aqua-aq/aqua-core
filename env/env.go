@@ -1,6 +1,8 @@
 package env
 
-import "syscall"
+import (
+	"syscall"
+)
 
 const FILE_EXTENSION = "aq"
 const MAIN = "main." + FILE_EXTENSION
@@ -15,3 +17,5 @@ func init() {
 		panic("environment value AQUA_PATH not found ")
 	}
 }
+
+const LIB_PATH = "libs"

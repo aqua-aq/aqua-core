@@ -251,6 +251,40 @@ func (p *Parser) ParseRepeatUntilExpression() (ast.WhileExpression, error) {
 	}, nil
 }
 
+func (p *Parser) ParseUsingExpression() (ast.UsingExpression, error) {
+	pos := p.pos
+	expr, err := p.Expression(power.PowerLowest, false)
+	if err != nil {
+		return ast.UsingExpression{}, err
+	}
+	var name *ast.IdentExpression
+	if peek, ok := p.Peek(); ok && peek.Type == tokens.TokenAs {
+		p.Move()
+		ident, err := p.Expect(tokens.TokenIdentifier)
+		if err != nil {
+			return ast.UsingExpression{}, err
+		}
+		name = &ast.IdentExpression{
+			Ident: ident.Value,
+			Pos:   ident.Pos,
+		}
+	}
+
+	_, block, err := p.ParseBlockExpression(map[tokens.TokenType]struct{}{
+		tokens.TokenEnd: {},
+	})
+	if err != nil {
+		return ast.UsingExpression{}, err
+	}
+	return ast.UsingExpression{
+		Pos:        pos,
+		Name:       name,
+		Expression: expr,
+		Block:      block,
+	}, nil
+
+}
+
 func (p *Parser) ParseSubroutineExpression() (ast.SubroutineDec, error) {
 	pos := p.pos
 	var ident *ast.IdentExpression
@@ -293,6 +327,7 @@ func (p *Parser) ParseSubroutineExpression() (ast.SubroutineDec, error) {
 		Arguments: args,
 		Body:      block,
 		Prototype: prototype,
+		IsGlobal:  ident != nil,
 	}, nil
 }
 

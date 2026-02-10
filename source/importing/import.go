@@ -64,7 +64,7 @@ func GetImport(current string, s string, virtualMachine *vm.VM[*object.Value]) (
 	case TypeDependenceMain, TypeDependence:
 		depVm, ok := (*virtualMachine.LibVms)[dep]
 		if !ok {
-			depVm, err = vm.New(filepath.Join(dep, env.CONFIG), virtualMachine.Paths, virtualMachine.LibVms, virtualMachine.Run)
+			depVm, err = vm.NewAndLoadConfig(filepath.Join(dep, env.CONFIG), virtualMachine.Paths, virtualMachine.LibVms, virtualMachine.Run)
 			if err != nil {
 				return "", nil, err
 			}

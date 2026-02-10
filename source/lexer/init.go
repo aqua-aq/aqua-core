@@ -53,11 +53,13 @@ func (l *Lexer) InitKeywords() {
 	l.KeyWords["while"] = tokens.TokenWhile
 	l.KeyWords["repeat"] = tokens.TokenRepeat
 	l.KeyWords["until"] = tokens.TokenUntil
+	l.KeyWords["using"] = tokens.TokenUsing
 	l.KeyWords["sub"] = tokens.TokenSub
 	l.KeyWords["with"] = tokens.TokenWith
 	l.KeyWords["mod"] = tokens.TokenMod
 	l.KeyWords["export"] = tokens.TokenExport
 	l.KeyWords["import"] = tokens.TokenImport
+	l.KeyWords["as"] = tokens.TokenAs
 	l.KeyWords["return"] = tokens.TokenReturn
 	l.KeyWords["break"] = tokens.TokenBreak
 	l.KeyWords["continue"] = tokens.TokenContinue
@@ -73,6 +75,7 @@ func (l *Lexer) InitKeywords() {
 	l.KeyWords["false"] = tokens.TokenFalse
 	l.KeyWords["null"] = tokens.TokenNull
 	l.KeyWords["infinity"] = tokens.TokenInfinity
+	l.KeyWords["nan"] = tokens.TokenNan
 }
 
 func (l *Lexer) Init() {

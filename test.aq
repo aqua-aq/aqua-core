@@ -1,1 +1,13 @@
-raise
+sub a()
+    raise: "some error"
+end
+
+sub b()
+    a()
+end
+
+sub c() 
+    b()
+end
+
+c()
