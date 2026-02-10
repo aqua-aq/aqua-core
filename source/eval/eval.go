@@ -7,6 +7,7 @@ import (
 	"github.com/vandi37/aqua/pkg/stacktrace"
 	"github.com/vandi37/aqua/source/ast"
 	"github.com/vandi37/aqua/source/errors"
+	"github.com/vandi37/aqua/source/importing"
 	"github.com/vandi37/aqua/source/object"
 	"github.com/vandi37/aqua/source/operators"
 	"github.com/vandi37/aqua/source/signal"
@@ -14,7 +15,7 @@ import (
 )
 
 type Eval interface {
-	Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult
+	Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult
 }
 
 func IntoEval(expr ast.Expression) Eval {
@@ -90,12 +91,52 @@ type (
 	ImportExpression    ast.ImportExpression
 )
 
-func (i ImportExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
-	panic("unimplemented")
+func (i ImportExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
+	expr := IntoEval(i.Path).Eval(vm, scope, false)
+	if expr.Signal.Has() {
+		return expr.Clone(clone)
+	}
+	str, expr := IntoString(vm, expr.SignalVal.Normalize(), i.Pos)
+	if expr.Signal.Has() {
+		return expr.Clone(clone)
+	}
+
+	name, res, err := importing.GetImport(i.Pos.GetPath(), str, vm)
+	if e, ok := err.(object.ExpressionResult); ok {
+		return e.Clone(clone)
+	}
+	if e, ok := err.(object.InnerValue); ok {
+		return object.ExpressionResult{
+			Signal:    signal.SignalRaise,
+			SignalVal: &object.Value{InnerValue: e},
+			Trace:     stacktrace.New(i.Pos),
+		}.Clone(clone)
+	}
+	if err != nil {
+		return object.ExpressionResult{
+			Signal: signal.SignalRaise,
+			SignalVal: &object.Value{InnerValue: object.Error{
+				Code:    errors.ImportError,
+				Message: err.Error(),
+			}},
+			Trace: stacktrace.New(i.Pos),
+		}
+	}
+	if i.Name != nil {
+		name = i.Name.Ident
+	}
+
+	scope.Set(name, &object.Value{
+		InnerValue: object.Object{Map: res},
+	})
+
+	return object.ExpressionResult{
+		Trace: stacktrace.New(i.Pos),
+	}
 }
 
-func (m ModExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
-	expr := IntoEval(m.Name).Eval(vm, scope, false)
+func (m ModExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
+	expr := IdentExpression(m.Name).Eval(vm, scope, false)
 	if expr.Signal.Has() {
 		return expr.Clone(clone)
 	}
@@ -123,10 +164,12 @@ func (m ModExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone b
 	}
 	return object.ExpressionResult{SignalVal: &object.Value{InnerValue: object.Object{
 		Map: export,
-	}}}
+	}},
+		Trace: stacktrace.New(m.Pos),
+	}
 }
 
-func (a AssigmentExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
+func (a AssigmentExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
 	if len(a.Left) != len(a.Right) {
 		return object.ExpressionResult{
 			Trace:  stacktrace.New(a.Pos),
@@ -155,7 +198,7 @@ func (a AssigmentExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], c
 	return object.ExpressionResult{Trace: stacktrace.New(a.Pos)}
 }
 
-func (i IdentExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
+func (i IdentExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
 	val, ok := scope.Get(i.Ident)
 	if !ok {
 		return object.ExpressionResult{Trace: stacktrace.New(i.Pos),
@@ -171,7 +214,7 @@ func (i IdentExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone
 	}.Clone(clone)
 }
 
-func (c CallExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
+func (c CallExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
 	sub := IntoEval(c.Subroutine).Eval(vm, scope, false)
 	if sub.Signal.Has() {
 		return sub
@@ -204,13 +247,13 @@ func (c CallExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone 
 	return Call(vm, sub.SignalVal, args, clone, c.Pos, nil)
 }
 
-func (e ErrorDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
+func (e ErrorDec) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
 	return object.ExpressionResult{Trace: stacktrace.New(e.Pos),
 		SignalVal: &object.Value{InnerValue: object.Error(e.Value)},
 	}
 }
 
-func (s SignalExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
+func (s SignalExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
 	res := IntoEval(s.SigVal).Eval(vm, scope, false)
 	if res.Signal.Has() {
 		return res.Clone(clone)
@@ -221,7 +264,7 @@ func (s SignalExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clon
 	}.Clone(clone)
 }
 
-func (w WhileExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
+func (w WhileExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
 	var (
 		result *object.Value
 		expr   object.ExpressionResult
@@ -275,7 +318,7 @@ after:
 	return object.ExpressionResult{Trace: stacktrace.New(w.Pos), SignalVal: result.Normalize()}.Clone(clone)
 }
 
-func (f ForExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
+func (f ForExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
 	iter := IntoEval(f.Expression).Eval(vm, scope, false)
 	if iter.Signal.Has() {
 		return iter.Clone(clone)
@@ -405,7 +448,7 @@ after:
 	return object.ExpressionResult{Trace: stacktrace.New(f.Pos), SignalVal: result.Normalize()}.Clone(clone)
 }
 
-func (i IfExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
+func (i IfExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
 	expr := IntoEval(i.Condition).Eval(vm, scope, false)
 	if expr.Signal.Has() {
 		return expr.Clone(clone)
@@ -433,7 +476,7 @@ func (i IfExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bo
 	return object.ExpressionResult{Trace: stacktrace.New(i.Pos)}
 }
 
-func (p PrefixExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
+func (p PrefixExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
 	expr := IntoEval(p.Value).Eval(vm, scope, false)
 	if expr.Signal.Has() {
 		return expr.Clone(clone)
@@ -531,7 +574,7 @@ func (p PrefixExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clon
 	}
 }
 
-func (b BinExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
+func (b BinExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
 	left := IntoEval(b.Left).Eval(vm, scope, false)
 	if left.Signal.Has() {
 		return left.Clone(clone)
@@ -562,7 +605,7 @@ func (b BinExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone b
 	return RunBin(vm, scope, clone, left.SignalVal.Normalize(), right.SignalVal.Normalize(), b.Operator, b.Pos)
 }
 
-func (o ObjectDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
+func (o ObjectDec) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
 	obj := make(map[string]*object.Value)
 	for _, val := range o.Vals {
 		if val.IsContinuos {
@@ -597,7 +640,7 @@ func (o ObjectDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool)
 	}
 }
 
-func (s SubroutineDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
+func (s SubroutineDec) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
 	if s.Name != nil {
 		sub := DeclareSubroutine(vm, scope, clone, s.Name.Ident, ast.SubroutineDec(s))
 		if sub.Signal.Has() {
@@ -609,28 +652,28 @@ func (s SubroutineDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone b
 	return DeclareSubroutine(vm, scope, clone, "<anonymous>", ast.SubroutineDec(s))
 }
 
-func (n NumDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
+func (n NumDec) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
 	return object.ExpressionResult{Trace: stacktrace.New(n.Pos),
 		SignalVal: &object.Value{InnerValue: object.Number{Value: n.Value}},
 	}
 }
 
-func (b BoolDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
+func (b BoolDec) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
 	return object.ExpressionResult{Trace: stacktrace.New(b.Pos),
 		SignalVal: &object.Value{InnerValue: object.Bool{Value: b.Value}}}
 }
-func (s StringDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
+func (s StringDec) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
 	return object.ExpressionResult{Trace: stacktrace.New(s.Pos),
 		SignalVal: &object.Value{InnerValue: object.String{Value: s.Value}},
 	}
 }
-func (n NullDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
+func (n NullDec) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
 	return object.ExpressionResult{Trace: stacktrace.New(n.Pos),
 		SignalVal: &object.Value{InnerValue: object.Null{}},
 	}
 }
 
-func (a ArrayDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
+func (a ArrayDec) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
 	var arr []*object.Value
 	for _, val := range a.Elements {
 		if val.IsContinuos {
@@ -661,7 +704,7 @@ func (a ArrayDec) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) 
 	}
 }
 
-func (l LetExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
+func (l LetExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
 	val := &object.Value{InnerValue: object.Null{}}
 	scope.Set(l.Ident, val)
 	return object.ExpressionResult{Trace: stacktrace.New(l.Pos),
@@ -669,6 +712,6 @@ func (l LetExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone b
 	}
 }
 
-func (b BlockExpression) Eval(vm *vm.VM, scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
+func (b BlockExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
 	return RunBlock(b, vm, scope, clone, nil)
 }

@@ -24,7 +24,7 @@ func toNumber[T int | float64](b bool) T {
 }
 
 func RunBin(
-	vm *vm.VM, scope scope.Scope[*object.Value], clone bool,
+	vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool,
 	left, right *object.Value, operator operators.Operator,
 	pos pos.Pos,
 ) object.ExpressionResult {

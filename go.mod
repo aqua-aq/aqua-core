@@ -2,4 +2,7 @@ module github.com/vandi37/aqua
 
 go 1.24.2
 
-require github.com/davecgh/go-spew v1.1.1 // indirect
+require (
+	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/pelletier/go-toml/v2 v2.2.4
+)

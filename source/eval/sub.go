@@ -8,7 +8,7 @@ import (
 	"github.com/vandi37/aqua/source/vm"
 )
 
-func DeclareSubroutine(vm *vm.VM, scope scope.Scope[*object.Value], clone bool, name string, s ast.SubroutineDec) object.ExpressionResult {
+func DeclareSubroutine(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool, name string, s ast.SubroutineDec) object.ExpressionResult {
 	arguments := object.Arguments{Last: s.Arguments.Last}
 	for _, arg := range s.Arguments.Elements {
 		res := IntoEval(arg.Default).Eval(vm, scope, true)

@@ -66,3 +66,11 @@ func (s ExpressionResult) String() string {
 func (s SubroutineResult) String() string {
 	return fmt.Sprintf("%v: %v\n%s", s.Signal, s.SignalVal.Normalize(), s.Trace.String())
 }
+
+func (s ExpressionResult) Error() string {
+	return s.String()
+}
+
+func (s SubroutineResult) Error() string {
+	return s.String()
+}

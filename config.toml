@@ -1,0 +1,8 @@
+name = "my project"
+version = "0.1.0"
+main = "custom_main.aq"
+
+[dependencies]
+math = "math/1.0.0"
+json = "json/1.2.2"
+os = "os/1.3.4"

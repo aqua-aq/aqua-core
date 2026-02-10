@@ -11,12 +11,13 @@ type Code uint
 
 const (
 	UnknownError Code = iota
+	SyntaxError
+	ImportError
 	TypeError
 	ValueError
+	DivisionByZero
 	InvalidSignal
 	IteratorStop
-	SyntaxError
-	DivisionByZero
 )
 
 func (c Code) Error() string {
@@ -31,6 +32,8 @@ func (c Code) Error() string {
 		return "iterator stop"
 	case SyntaxError:
 		return "syntax error"
+	case ImportError:
+		return "import error"
 	default:
 		return "unknown error"
 	}

@@ -8,6 +8,14 @@ import (
 type Pos struct {
 	line, column uint
 	path         string
+	buildIn      bool
+}
+
+func BuildInPos(f string) Pos {
+	return Pos{
+		path:    f,
+		buildIn: true,
+	}
 }
 
 func NewPos(line, column uint, path string) (Pos, error) {
@@ -15,7 +23,7 @@ func NewPos(line, column uint, path string) (Pos, error) {
 	if err != nil {
 		return Pos{}, err
 	}
-	return Pos{line, column, absPath}, nil
+	return Pos{line, column, absPath, false}, nil
 }
 func (p Pos) GetLine() uint {
 	return p.line
@@ -39,5 +47,8 @@ func (p *Pos) NextLine() {
 }
 
 func (p Pos) String() string {
+	if p.buildIn {
+		return fmt.Sprintf("build-in function %s", p.path)
+	}
 	return fmt.Sprintf("%s:%d:%d", p.path, p.line, p.column)
 }

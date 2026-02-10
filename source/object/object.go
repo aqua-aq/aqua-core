@@ -9,6 +9,7 @@ import (
 	"github.com/vandi37/aqua/pkg/scope"
 	"github.com/vandi37/aqua/source/ast"
 	"github.com/vandi37/aqua/source/errors"
+	"github.com/vandi37/aqua/source/vm"
 )
 
 type InnerValue interface {
@@ -43,7 +44,7 @@ type (
 		Scope     scope.Scope[*Value]
 		Prototype *Value
 		// optional
-		BuildIn func(scope.Scope[*Value]) SubroutineResult
+		BuildIn func(*vm.VM[*Value], scope.Scope[*Value]) SubroutineResult
 		// optional code
 		Code ast.BlockExpression
 	}

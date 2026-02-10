@@ -10,7 +10,7 @@ import (
 	"github.com/vandi37/aqua/source/vm"
 )
 
-func IntoBool(vm *vm.VM, val *object.Value, pos pos.Pos) (bool, object.ExpressionResult) {
+func IntoBool(vm *vm.VM[*object.Value], val *object.Value, pos pos.Pos) (bool, object.ExpressionResult) {
 	if b, ok := val.Normalize().InnerValue.(object.Bool); ok {
 		return b.Value, object.ExpressionResult{Trace: stacktrace.New(pos)}
 	}
@@ -35,7 +35,7 @@ func IntoBool(vm *vm.VM, val *object.Value, pos pos.Pos) (bool, object.Expressio
 	}
 }
 
-func IntoIter(val *object.Value, vm *vm.VM, pos pos.Pos) object.ExpressionResult {
+func IntoIter(val *object.Value, vm *vm.VM[*object.Value], pos pos.Pos) object.ExpressionResult {
 	if !AttrExists(val.Normalize(), keywords.Iter) {
 		return object.ExpressionResult{Trace: stacktrace.New(pos),
 			SignalVal: val.Normalize(),
@@ -47,7 +47,7 @@ func IntoIter(val *object.Value, vm *vm.VM, pos pos.Pos) object.ExpressionResult
 	}
 	return Call(vm, method.SignalVal.Normalize(), nil, false, pos, nil)
 }
-func IntoString(vm *vm.VM, val *object.Value, pos pos.Pos) (string, object.ExpressionResult) {
+func IntoString(vm *vm.VM[*object.Value], val *object.Value, pos pos.Pos) (string, object.ExpressionResult) {
 	if !AttrExists(val.Normalize(), keywords.Display) {
 		return val.Normalize().String(), object.ExpressionResult{Trace: stacktrace.New(pos)}
 	}

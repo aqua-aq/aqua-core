@@ -1,13 +1,59 @@
 package vm
 
-import "github.com/vandi37/aqua/source/object"
+import (
+	"os"
+	"path/filepath"
 
-type VM struct {
-	Files map[string]map[string]*object.Value
+	"github.com/vandi37/aqua/env"
+	"github.com/vandi37/aqua/source/config"
+)
+
+type Paths[T any] map[string]struct {
+	Vals map[string]T
+	Name string
 }
 
-func New() *VM {
-	return &VM{
-		Files: map[string]map[string]*object.Value{},
+type VMs[T any] map[string]*VM[T]
+
+type VM[T any] struct {
+	Paths  *Paths[T]
+	StdLib map[string]func() (map[string]T, error)
+	LibVms *VMs[T]
+	Run    func(path, name string, vm *VM[T]) (map[string]T, error)
+	Config config.Config
+}
+
+func New[T any](path string, paths *Paths[T], libVms *VMs[T], run func(path, name string, vm *VM[T]) (map[string]T, error)) (*VM[T], error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
 	}
+	defer file.Close()
+	config, err := config.NewConfig(file)
+	if err != nil {
+		return nil, err
+	}
+	err = ResolveDependencies(config.Dependencies)
+	if err != nil {
+		return nil, err
+	}
+	std := map[string]func() (map[string]T, error){}
+	return &VM[T]{
+		Paths:  paths,
+		StdLib: std,
+		LibVms: libVms,
+		Run:    run,
+		Config: config,
+	}, nil
+}
+
+func ResolveDependencies(dependencies map[string]string) error {
+	for k, v := range dependencies {
+		abs, err := filepath.Abs(filepath.Join(env.AQUA_PATH, v))
+		if err != nil {
+			return err
+		}
+		dependencies[k] = abs
+	}
+	return nil
 }

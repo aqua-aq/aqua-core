@@ -16,7 +16,11 @@ func ParseArgs(args Arguments, vals []*Value, scope scope.Scope[*Value]) {
 	}
 
 	if args.Last != nil && len(vals) > len(args.Elements) {
-		left := vals[len(args.Elements)-1:]
+		l := len(args.Elements) - 1
+		if l < 0 {
+			l = 0
+		}
+		left := vals[l:]
 		scope.Set(*args.Last, &Value{Array{Elements: left}})
 	}
 }

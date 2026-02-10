@@ -12,7 +12,7 @@ import (
 	"github.com/vandi37/aqua/source/vm"
 )
 
-func Call(vm *vm.VM, sub *object.Value, args []*object.Value, clone bool, pos pos.Pos, export map[string]*object.Value) object.ExpressionResult {
+func Call(vm *vm.VM[*object.Value], sub *object.Value, args []*object.Value, clone bool, pos pos.Pos, export map[string]*object.Value) object.ExpressionResult {
 	method, ok := sub.Normalize().InnerValue.(object.Method)
 	if !ok {
 		subroutine, ok := sub.Normalize().InnerValue.(*object.Subroutine)
@@ -35,7 +35,7 @@ func Call(vm *vm.VM, sub *object.Value, args []*object.Value, clone bool, pos po
 	subScope.Set(keywords.It, method.It.Normalize())
 	object.ParseArgs(method.Subroutine.Arguments, args, subScope)
 	if method.Subroutine.BuildIn != nil {
-		res := method.Subroutine.BuildIn(subScope).AsExpressionResult()
+		res := method.Subroutine.BuildIn(vm, subScope).AsExpressionResult()
 		res.Trace = res.Trace.Add(method.Subroutine.Name, pos)
 		return res
 	}
@@ -52,7 +52,7 @@ func Call(vm *vm.VM, sub *object.Value, args []*object.Value, clone bool, pos po
 		}
 	}
 	if subRes.SignalVal.Normalize().IsNull() {
-		return object.ExpressionResult{SignalVal: method.It, Trace: subRes.Trace}
+		return object.ExpressionResult{Signal: subRes.Signal.IntoSignal(), SignalVal: method.It, Trace: subRes.Trace}
 	}
 	return subRes.AsExpressionResult()
 }
