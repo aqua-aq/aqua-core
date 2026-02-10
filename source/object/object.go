@@ -217,13 +217,16 @@ func (a Arguments) String() string {
 		if i != 0 {
 			sb.WriteString(", ")
 		}
-		sb.WriteString(fmt.Sprintf("%v", arg))
+		sb.WriteString(arg.Name)
 		if arg.Default == nil || !arg.Default.IsNull() {
-			sb.WriteString(fmt.Sprintf("= %v", arg.Default.String()))
+			sb.WriteString("=" + arg.Default.String())
 		}
 	}
 	if a.Last != nil {
-		sb.WriteString(fmt.Sprintf(", ...%v", *a.Last))
+		if len(a.Elements) != 0 {
+			sb.WriteString(", ")
+		}
+		sb.WriteString("..." + *a.Last)
 	}
 	sb.WriteByte(')')
 	return sb.String()

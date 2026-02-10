@@ -9,7 +9,17 @@ import (
 func (p *Parser) ParseArguments() (ast.Arguments, error) {
 	var res ast.Arguments
 	for {
-		if peek, _ := p.Peek(0); peek.Type != tokens.TokenIdentifier {
+		peek, _ := p.Peek(0)
+		if peek.Type == tokens.TokenDots {
+			p.Move()
+			ident, err := p.Expect(tokens.TokenIdentifier)
+			if err != nil {
+				return ast.Arguments{}, err
+			}
+			res.Last = &ident.Value
+			return res, nil
+		}
+		if peek.Type != tokens.TokenIdentifier {
 			return res, nil
 		}
 		ident, err := p.Expect(tokens.TokenIdentifier)
@@ -18,11 +28,6 @@ func (p *Parser) ParseArguments() (ast.Arguments, error) {
 		}
 		peek, ok := p.Peek(0)
 		if !ok {
-			return res, nil
-		}
-		if peek.Type == tokens.TokenDots {
-			p.Move()
-			res.Last = &ident.Value
 			return res, nil
 		}
 		var def ast.Expression
