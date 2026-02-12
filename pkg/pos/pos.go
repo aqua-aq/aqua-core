@@ -9,6 +9,7 @@ type Pos struct {
 	line, column uint
 	path         string
 	buildIn      bool
+	relative     *struct{ line, column uint }
 }
 
 func BuildInPos(f string) Pos {
@@ -17,13 +18,19 @@ func BuildInPos(f string) Pos {
 		buildIn: true,
 	}
 }
-
+func NewRelative(relative Pos, line, column uint) Pos {
+	relative.relative = &struct {
+		line   uint
+		column uint
+	}{line, column}
+	return relative
+}
 func NewPos(line, column uint, path string) (Pos, error) {
 	absPath, err := filepath.Abs(path)
 	if err != nil {
 		return Pos{}, err
 	}
-	return Pos{line, column, absPath, false}, nil
+	return Pos{line, column, absPath, false, nil}, nil
 }
 func (p Pos) GetLine() uint {
 	return p.line
@@ -36,17 +43,35 @@ func (p Pos) GetPath() string {
 }
 
 func (p *Pos) AddColumn(n uint) {
+	if p.relative != nil {
+		p.relative.column += n
+		return
+	}
 	p.column += n
 }
 func (p *Pos) AddOneColumn() {
+	if p.relative != nil {
+		p.relative.column++
+		return
+	}
 	p.column++
 }
 func (p *Pos) NextLine() {
+	if p.relative != nil {
+		p.relative.line++
+		p.relative.column = 0
+		return
+	}
 	p.line++
 	p.column = 0
 }
 
 func (p Pos) String() string {
+	if p.relative != nil {
+		line, column := p.relative.line, p.relative.column
+		p.relative = nil
+		return fmt.Sprintf("%s (position in the string: %d:%d)", p.String(), line, column)
+	}
 	if p.buildIn {
 		return fmt.Sprintf("build-in function %s", p.path)
 	}

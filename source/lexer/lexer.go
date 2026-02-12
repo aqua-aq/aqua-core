@@ -30,6 +30,13 @@ func New(data, path string) (*Lexer, error) {
 	}, nil
 }
 
+func NewRelative(data string, relative pos.Pos) *Lexer {
+	return &Lexer{
+		Pos:  pos.NewRelative(relative, 1, 0),
+		Data: []rune(data),
+	}
+}
+
 func (l *Lexer) NextToken() (tokens.Token, error) {
 	l.Trim()
 	first, ok := l.Next()

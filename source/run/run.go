@@ -31,10 +31,7 @@ func Run(path, name string, vm *vm.VM[*object.Value]) (map[string]*object.Value,
 	if err != nil {
 		return nil, err
 	}
-	parser, err := parser.New(lexer.Tokens, path)
-	if err != nil {
-		return nil, err
-	}
+	parser := parser.New(lexer.Tokens, pos)
 	ending, block, err := parser.ParseBlockExpression(map[tokens.TokenType]struct{}{
 		tokens.TokenEof:    {},
 		tokens.TokenExport: {},

@@ -24,13 +24,13 @@ func ParseSliceIndex(val *object.Value, length int, pos pos.Pos) (int, object.Ex
 		}
 	}
 	idx := int(num.Value)
-	if idx < 0 || idx >= length {
+	if idx < 0 || idx > length {
 		return 0, object.ExpressionResult{
 			Trace:  stacktrace.New(pos),
 			Signal: signal.SignalRaise,
 			SignalVal: &object.Value{InnerValue: object.Error{
 				Code:    errors.ValueError,
-				Message: fmt.Sprintf("index %d is out of range, expected [0; %d)", idx, length),
+				Message: fmt.Sprintf("index %d is out of range, expected [0; %d]", idx, length),
 			}},
 		}
 	}

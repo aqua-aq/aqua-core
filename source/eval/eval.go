@@ -2,6 +2,7 @@ package eval
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/vandi37/aqua/pkg/scope"
 	"github.com/vandi37/aqua/pkg/stacktrace"
@@ -131,7 +132,7 @@ func (s SliceExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*objec
 	}
 	if arr, ok := left.SignalVal.Normalize().InnerValue.(object.Array); ok {
 		start := 0
-		end := 0
+		end := len(arr.Elements)
 		if s.Start != nil {
 			res := IntoEval(s.Start).Eval(vm, scope, false)
 			if res.Signal.Has() {
@@ -325,7 +326,7 @@ func (a AssigmentExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*o
 		for i, v := range a.Left {
 			if v.Name != nil {
 				return object.ExpressionResult{
-					Trace:  stacktrace.New(a.Pos),
+					Trace:  stacktrace.New(v.Pos),
 					Signal: signal.SignalRaise,
 					SignalVal: &object.Value{
 						InnerValue: object.Error{
@@ -357,6 +358,8 @@ func (a AssigmentExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*o
 				name = *v.Name
 			} else if ident, ok := v.Expression.(ast.IdentExpression); ok {
 				name = ident
+			} else if let, ok := v.Expression.(ast.LetExpression); ok {
+				name = let.IdentExpression
 			} else {
 				return object.ExpressionResult{Trace: stacktrace.New(v.Pos),
 					Signal: signal.SignalRaise,
@@ -855,9 +858,76 @@ func (b BoolDec) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value]
 		SignalVal: &object.Value{InnerValue: object.Bool{Value: b.Value}}}
 }
 func (s StringDec) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
-	return object.ExpressionResult{Trace: stacktrace.New(s.Pos),
-		SignalVal: &object.Value{InnerValue: object.String{Value: s.Value}},
+	var result strings.Builder
+	n := len(s.Value)
+
+	for i := 0; i < n; {
+		// \@
+		if s.Value[i] == '\\' && i+1 < n && s.Value[i+1] == '@' {
+			result.WriteByte('@')
+			i += 2
+			continue
+		}
+
+		// @{...}
+		if s.Value[i] == '@' {
+			if i+1 > n || s.Value[i+1] != '{' {
+				return object.ExpressionResult{Trace: stacktrace.New(s.Pos),
+					Signal: signal.SignalRaise,
+					SignalVal: &object.Value{InnerValue: object.Error{
+						Code:    errors.SyntaxError,
+						Message: fmt.Sprintf("expected '{' after '@' at %d in the string", i),
+					}}}
+			}
+			i += 2
+			var expr strings.Builder
+
+			for i < n {
+				// \}
+				if s.Value[i] == '\\' && i+1 < n && s.Value[i+1] == '}' {
+					expr.WriteByte('}')
+					i += 2
+					continue
+				}
+
+				if s.Value[i] == '}' {
+					i++
+					goto ok
+				}
+
+				expr.WriteByte(s.Value[i])
+				i++
+			}
+			goto unclosed
+		ok:
+			res := Run(vm, scope, expr.String(), s.Pos, false)
+			if res.Signal.Has() {
+				return res
+			}
+			str, res := IntoString(vm, res.SignalVal.Normalize(), s.Pos)
+			if res.Signal.Has() {
+				return res
+			}
+			result.WriteString(str)
+			continue
+		}
+
+		// обычный символ
+		result.WriteByte(s.Value[i])
+		i++
 	}
+
+	return object.ExpressionResult{Trace: stacktrace.New(s.Pos),
+		SignalVal: &object.Value{InnerValue: object.String{Value: result.String()}},
+	}
+
+unclosed:
+	return object.ExpressionResult{Trace: stacktrace.New(s.Pos),
+		Signal: signal.SignalRaise,
+		SignalVal: &object.Value{InnerValue: object.Error{
+			Code:    errors.SyntaxError,
+			Message: "unclosed @{",
+		}}}
 }
 func (n NullDec) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
 	return object.ExpressionResult{Trace: stacktrace.New(n.Pos),

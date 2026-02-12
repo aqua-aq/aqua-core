@@ -46,7 +46,7 @@ func (l *Lexer) GetString(pos pos.Pos, t tokens.TokenType, name string, close ru
 			if !ok {
 				break
 			}
-			if next == '@' {
+			if next == '@' || next == '}' {
 				sb.WriteRune('\\')
 				continue
 			}

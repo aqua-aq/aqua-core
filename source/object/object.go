@@ -249,3 +249,10 @@ func (v *Value) Normalize() *Value {
 func (v *Value) String() string {
 	return v.Normalize().InnerValue.String()
 }
+
+func IntoValue(err error) *Value {
+	if e, ok := err.(errors.Error); ok {
+		return &Value{InnerValue: Error(e)}
+	}
+	return &Value{InnerValue: String{Value: err.Error()}}
+}

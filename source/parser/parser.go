@@ -34,12 +34,8 @@ type Parser struct {
 	pos    pos.Pos
 }
 
-func New(tokens []tokens.Token, path string) (*Parser, error) {
-	pos, err := pos.NewPos(1, 0, path)
-	if err != nil {
-		return nil, err
-	}
-	return &Parser{tokens, pos}, nil
+func New(tokens []tokens.Token, pos pos.Pos) *Parser {
+	return &Parser{tokens, pos}
 }
 
 func (p *Parser) MoveN(n int) bool {
