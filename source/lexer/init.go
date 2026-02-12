@@ -53,6 +53,9 @@ func (l *Lexer) InitKeywords() {
 	l.KeyWords["while"] = tokens.TokenWhile
 	l.KeyWords["repeat"] = tokens.TokenRepeat
 	l.KeyWords["until"] = tokens.TokenUntil
+	l.KeyWords["switch"] = tokens.TokenSwitch
+	l.KeyWords["case"] = tokens.TokenCase
+	l.KeyWords["default"] = tokens.TokenDefault
 	l.KeyWords["using"] = tokens.TokenUsing
 	l.KeyWords["sub"] = tokens.TokenSub
 	l.KeyWords["with"] = tokens.TokenWith

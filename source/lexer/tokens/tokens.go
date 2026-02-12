@@ -31,6 +31,9 @@ const (
 	TokenRepeat
 	TokenUntil
 	TokenUsing
+	TokenSwitch
+	TokenCase
+	TokenDefault
 
 	TokenSub
 	TokenWith
@@ -123,6 +126,12 @@ func (t TokenType) String() string {
 		return "<repeat>"
 	case TokenUntil:
 		return "<until>"
+	case TokenSwitch:
+		return "<switch>"
+	case TokenCase:
+		return "<case>"
+	case TokenDefault:
+		return "<default>"
 	case TokenSub:
 		return "<sub>"
 	case TokenWith:

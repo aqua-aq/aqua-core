@@ -175,14 +175,6 @@ func (p *Parser) ParseWhileExpression() (ast.WhileExpression, error) {
 	if err != nil {
 		return ast.WhileExpression{}, err
 	}
-	var after ast.Expression
-	if peek, ok := p.Peek(0); ok && peek.Type == tokens.TokenColumn {
-		p.Move()
-		after, err = p.Expression(power.PowerLowest, false)
-		if err != nil {
-			return ast.WhileExpression{}, err
-		}
-	}
 	ending, block, err := p.ParseBlockExpression(map[tokens.TokenType]struct{}{
 		tokens.TokenEnd:  {},
 		tokens.TokenElse: {},
@@ -204,7 +196,6 @@ func (p *Parser) ParseWhileExpression() (ast.WhileExpression, error) {
 		Pos:       pos,
 		IsWhile:   true,
 		Condition: condition,
-		After:     after,
 		Block:     block,
 		Else:      elseBlock,
 	}, nil
@@ -233,19 +224,10 @@ func (p *Parser) ParseRepeatUntilExpression() (ast.WhileExpression, error) {
 	if err != nil {
 		return ast.WhileExpression{}, err
 	}
-	var after ast.Expression
-	if peek, ok := p.Peek(0); ok && peek.Type == tokens.TokenColumn {
-		p.Move()
-		after, err = p.Expression(power.PowerLowest, false)
-		if err != nil {
-			return ast.WhileExpression{}, err
-		}
-	}
 	return ast.WhileExpression{
 		Pos:       pos,
 		IsWhile:   false,
 		Condition: condition,
-		After:     after,
 		Block:     block,
 		Else:      elseBlock,
 	}, nil
@@ -384,5 +366,56 @@ func (p *Parser) ParseSignalExpression(signal signal.Signal) (ast.SignalExpressi
 		Signal: signal,
 		SigVal: expr,
 		Pos:    pos,
+	}, nil
+}
+
+func (p *Parser) ParseSwitchExpression() (ast.SwitchExpression, error) {
+	pos := p.pos
+	value, err := p.Expression(power.PowerLowest, false)
+	if err != nil {
+		return ast.SwitchExpression{}, err
+	}
+	_, err = p.Expect(tokens.TokenCase)
+	if err != nil {
+		return ast.SwitchExpression{}, err
+	}
+	ending := tokens.TokenCase
+	var cases []ast.Case
+	endings := map[tokens.TokenType]struct{}{
+		tokens.TokenCase:    {},
+		tokens.TokenDefault: {},
+		tokens.TokenEnd:     {},
+	}
+	for ending == tokens.TokenCase {
+		curPos := p.pos
+		expr, err := p.Expression(power.PowerLowest, false)
+		if err != nil {
+			return ast.SwitchExpression{}, err
+		}
+		var block ast.BlockExpression
+		ending, block, err = p.ParseBlockExpression(endings)
+		if err != nil {
+			return ast.SwitchExpression{}, err
+		}
+		cases = append(cases, ast.Case{
+			Pos:        curPos,
+			Expression: expr,
+			Block:      block,
+		})
+	}
+	var d *ast.BlockExpression
+	if ending == tokens.TokenDefault {
+		_, block, err := p.ParseBlockExpression(map[tokens.TokenType]struct{}{tokens.TokenEnd: {}})
+		if err != nil {
+			return ast.SwitchExpression{}, err
+		}
+		d = &block
+	}
+
+	return ast.SwitchExpression{
+		Pos:     pos,
+		Value:   value,
+		Cases:   cases,
+		Default: d,
 	}, nil
 }

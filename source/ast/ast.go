@@ -121,7 +121,6 @@ type (
 		Pos       pos.Pos
 		IsWhile   bool
 		Condition Expression
-		After     Expression
 		Block     BlockExpression
 		Else      *BlockExpression
 	}
@@ -140,11 +139,19 @@ type (
 		Ident string
 		Pos   pos.Pos
 	}
+	AssigmentPattern struct {
+		Expression Expression
+		Name       *IdentExpression
+		Pos        pos.Pos
+	}
 	AssigmentExpression struct {
-		Left     []Expression
-		Right    []Expression
-		Operator operators.Operator
-		Pos      pos.Pos
+		ExpressionLeft *struct {
+			Expression
+			operators.Operator
+		}
+		Left  []AssigmentPattern
+		Right Expression
+		Pos   pos.Pos
 	}
 	ModExpression struct {
 		Name   IdentExpression
@@ -156,6 +163,23 @@ type (
 		Path Expression
 		Name *IdentExpression
 		Pos  pos.Pos
+	}
+	Case struct {
+		Expression Expression
+		Block      BlockExpression
+		Pos        pos.Pos
+	}
+	SwitchExpression struct {
+		Value   Expression
+		Cases   []Case
+		Default *BlockExpression
+		Pos     pos.Pos
+	}
+	SliceExpression struct {
+		Left  Expression
+		Start Expression
+		End   Expression
+		Pos pos.Pos
 	}
 )
 
@@ -181,3 +205,5 @@ func (IdentExpression) expression()     {}
 func (AssigmentExpression) expression() {}
 func (ModExpression) expression()       {}
 func (ImportExpression) expression()    {}
+func (SwitchExpression) expression()    {}
+func (SliceExpression) expression()     {}

@@ -18,40 +18,49 @@ func (p *Parser) Expression(bp power.BindingPower, isBind bool) (ast.Expression,
 		if !ok {
 			break
 		}
-		if peek.Type == tokens.TokenComma {
+		if peek.Type == tokens.TokenComma || peek.Type == tokens.TokenColumn {
 			if bp >= power.PowerAssignment {
 				break
 			}
-			leftArray := []ast.Expression{left}
-			for ; peek.Type == tokens.TokenComma; peek, ok = p.Peek(0) {
+			var name *ast.IdentExpression
+			if peek.Type == tokens.TokenColumn {
+				p.Move()
+				ident, err := p.Expect(tokens.TokenIdentifier)
+				if err != nil {
+					return nil, err
+				}
+				name = &ast.IdentExpression{Ident: ident.Value, Pos: ident.Pos}
+			}
+			leftArray := []ast.AssigmentPattern{{Name: name, Expression: left}}
+			for ; peek.Type == tokens.TokenComma || peek.Type == tokens.TokenColumn; peek, ok = p.Peek(0) {
 				p.Move()
 				expr, err := p.Expression(power.PowerAssignment, false)
 				if err != nil {
 					return nil, err
 				}
-				leftArray = append(leftArray, expr)
+				var name *ast.IdentExpression
+				if peek.Type == tokens.TokenColumn {
+					ident, err := p.Expect(tokens.TokenIdentifier)
+					if err != nil {
+						return nil, err
+					}
+					name = &ast.IdentExpression{Ident: ident.Value, Pos: ident.Pos}
+				}
+				leftArray = append(leftArray, ast.AssigmentPattern{Expression: expr, Name: name})
 			}
-			_, err = p.Expect(tokens.TokenAssign) // not allowing +=, -= etc in multi value assignment, may be added in the future
+			_, err = p.Expect(tokens.TokenAssign)
 			if err != nil {
 				return nil, err
 			}
 			pos := p.pos
-			expr, err := p.Expression(power.PowerAssignment, false)
+			right, err := p.Expression(power.PowerAssignment, false)
 			if err != nil {
 				return nil, err
 			}
-			rightArray := []ast.Expression{expr}
-			for peek, ok = p.Peek(0); peek.Type == tokens.TokenComma; peek, ok = p.Peek(0) {
-				p.Move()
-				expr, err := p.Expression(power.PowerAssignment, false)
-				if err != nil {
-					return nil, err
-				}
-				leftArray = append(leftArray, expr)
-			}
+
 			left = ast.AssigmentExpression{
 				Left:  leftArray,
-				Right: rightArray,
+				Right: right,
 				Pos:   pos,
 			}
 
@@ -66,8 +75,13 @@ func (p *Parser) Expression(bp power.BindingPower, isBind bool) (ast.Expression,
 				return nil, err
 			}
 			left = ast.AssigmentExpression{
-				Left:  []ast.Expression{left},
-				Right: []ast.Expression{right},
+				ExpressionLeft: &struct {
+					ast.Expression
+					operators.Operator
+				}{
+					Expression: left,
+				},
+				Right: right,
 				Pos:   pos,
 			}
 		} else if bin, ok := peek.Type.IntoBin(); ok {
@@ -84,8 +98,14 @@ func (p *Parser) Expression(bp power.BindingPower, isBind bool) (ast.Expression,
 					return nil, err
 				}
 				left = ast.AssigmentExpression{
-					Left:  []ast.Expression{left},
-					Right: []ast.Expression{right},
+					ExpressionLeft: &struct {
+						ast.Expression
+						operators.Operator
+					}{
+						Expression: left,
+						Operator:   bin,
+					},
+					Right: right,
 					Pos:   pos,
 				}
 			} else {
@@ -93,11 +113,62 @@ func (p *Parser) Expression(bp power.BindingPower, isBind bool) (ast.Expression,
 					break
 				}
 				p.Move()
+				var hasColumn bool
+				if bin == operators.Index {
+					peek, _ := p.Peek(0)
+					hasColumn = peek.Type == tokens.TokenColumn
+				}
+				if hasColumn {
+					p.Move()
+					if peek, _ := p.Peek(0); peek.Type == tokens.TokenSquareBracketClosed {
+						p.Move()
+						left = ast.SliceExpression{
+							Pos:  pos,
+							Left: left,
+						}
+						continue
+					}
+				}
 				right, err := p.Expression(bin.Power(), bin == operators.Bind)
 				if err != nil {
 					return nil, err
 				}
+				if hasColumn {
+					_, err := p.Expect(tokens.TokenSquareBracketClosed)
+					if err != nil {
+						return nil, err
+					}
+					left = ast.SliceExpression{
+						Pos:  pos,
+						Left: left,
+						End:  right,
+					}
+					continue
+				}
 				if bin == operators.Index {
+					if peek, _ := p.Peek(0); peek.Type == tokens.TokenColumn {
+						p.Move()
+						if peek, _ := p.Peek(0); peek.Type == tokens.TokenSquareBracketClosed {
+							p.Move()
+							left = ast.SliceExpression{
+								Pos:   pos,
+								Left:  left,
+								Start: right,
+							}
+							continue
+						}
+						end, err := p.Expression(bin.Power(), bin == operators.Bind)
+						if err != nil {
+							return nil, err
+						}
+						left = ast.SliceExpression{
+							Pos:   pos,
+							Left:  left,
+							Start: right,
+							End:   end,
+						}
+						continue
+					}
 					_, err := p.Expect(tokens.TokenSquareBracketClosed)
 					if err != nil {
 						return nil, err

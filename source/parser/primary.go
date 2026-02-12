@@ -41,6 +41,8 @@ func (p *Parser) PrimaryExpression() (ast.Expression, error) {
 		return p.ParseRepeatUntilExpression()
 	case tokens.TokenUsing:
 		return p.ParseUsingExpression()
+	case tokens.TokenSwitch:
+		return p.ParseSwitchExpression()
 	case tokens.TokenSub:
 		return p.ParseSubroutineExpression()
 	case tokens.TokenMod:

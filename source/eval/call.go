@@ -13,6 +13,13 @@ import (
 )
 
 func Call(vm *vm.VM[*object.Value], sub *object.Value, args []*object.Value, clone bool, pos pos.Pos, export map[string]*object.Value) object.ExpressionResult {
+	if AttrExists(sub, keywords.Call) {
+		method := GetAttrMethod(sub, keywords.Call, pos)
+		if method.Signal.Has() {
+			return method
+		}
+		sub = method.SignalVal.Normalize()
+	}
 	method, ok := sub.Normalize().InnerValue.(object.Method)
 	if !ok {
 		subroutine, ok := sub.Normalize().InnerValue.(*object.Subroutine)

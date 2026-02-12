@@ -74,11 +74,11 @@ func GetImport(current string, s string, virtualMachine *vm.VM[*object.Value]) (
 		if t == TypeDependence {
 			main = full
 		}
-		name := strings.TrimSuffix(main, filepath.Ext(main))
+		name := strings.TrimSuffix(filepath.Base(main), filepath.Ext(main))
 		vals, err := depVm.Run(depVm.Config.Main, fmt.Sprintf("%s %s", dep, name), depVm)
 		return name, vals, err
 	case TypeFile:
-		name := strings.TrimSuffix(full, filepath.Ext(full))
+		name := strings.TrimSuffix(filepath.Base(full), filepath.Ext(full))
 		vals, err := virtualMachine.Run(full, name, virtualMachine)
 		return name, vals, err
 	}

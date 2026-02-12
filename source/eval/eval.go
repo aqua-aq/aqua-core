@@ -65,6 +65,10 @@ func IntoEval(expr ast.Expression) Eval {
 		return ModExpression(val)
 	case ast.ImportExpression:
 		return ImportExpression(val)
+	case ast.SwitchExpression:
+		return SwitchExpression(val)
+	case ast.SliceExpression:
+		return SliceExpression(val)
 	default:
 		return NullDec{}
 	}
@@ -93,7 +97,113 @@ type (
 	AssigmentExpression ast.AssigmentExpression
 	ModExpression       ast.ModExpression
 	ImportExpression    ast.ImportExpression
+	SwitchExpression    ast.SwitchExpression
+	SliceExpression     ast.SliceExpression
 )
+
+func (s SliceExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
+	left := IntoEval(s.Left).Eval(vm, scope, false)
+	if left.Signal.Has() {
+		return left.Clone(clone)
+	}
+	if AttrExists(left.SignalVal.Normalize(), keywords.Slice) {
+		m := GetAttrMethod(left.SignalVal.Normalize(), keywords.Eq, s.Pos)
+		if m.Signal.Has() {
+			return m.Clone(clone)
+		}
+		start := &object.Value{InnerValue: object.Null{}}
+		end := &object.Value{InnerValue: object.Null{}}
+		if s.Start != nil {
+			res := IntoEval(s.Start).Eval(vm, scope, false)
+			if res.Signal.Has() {
+				return res.Clone(clone)
+			}
+			start = res.SignalVal.Normalize()
+		}
+		if s.End != nil {
+			res := IntoEval(s.End).Eval(vm, scope, false)
+			if res.Signal.Has() {
+				return res.Clone(clone)
+			}
+			end = res.SignalVal.Normalize()
+		}
+		return Call(vm, m.SignalVal.Normalize(), []*object.Value{start, end}, clone, s.Pos, nil)
+	}
+	if arr, ok := left.SignalVal.Normalize().InnerValue.(object.Array); ok {
+		start := 0
+		end := 0
+		if s.Start != nil {
+			res := IntoEval(s.Start).Eval(vm, scope, false)
+			if res.Signal.Has() {
+				return res.Clone(clone)
+			}
+			if idx, err := ParseSliceIndex(res.SignalVal, len(arr.Elements), s.Pos); err.Signal.Has() {
+				return err
+			} else {
+				start = idx
+			}
+		}
+		if s.End != nil {
+			res := IntoEval(s.End).Eval(vm, scope, false)
+			if res.Signal.Has() {
+				return res.Clone(clone)
+			}
+			if idx, err := ParseSliceIndex(res.SignalVal, len(arr.Elements), s.Pos); err.Signal.Has() {
+				return err
+			} else {
+				end = idx
+			}
+		}
+		return object.ExpressionResult{Trace: stacktrace.New(s.Pos), SignalVal: &object.Value{InnerValue: object.Array{Elements: arr.Elements[start:end]}}}
+	}
+	return object.ExpressionResult{Trace: stacktrace.New(s.Pos),
+		Signal: signal.SignalRaise,
+		SignalVal: &object.Value{InnerValue: object.Error{
+			Code:    errors.TypeError,
+			Message: fmt.Sprintf("expected method '%s' or type %s, got %s", keywords.Slice, object.TypeArray, left.SignalVal.Type()),
+		}},
+	}
+}
+
+func (s SwitchExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
+	expr := IntoEval(s.Value).Eval(vm, scope, false)
+	if expr.Signal.Has() {
+		return expr.Clone(clone)
+	}
+	var method *object.Value
+	if AttrExists(expr.SignalVal.Normalize(), keywords.Eq) {
+		m := GetAttrMethod(expr.SignalVal.Normalize(), keywords.Eq, s.Pos)
+		if m.Signal.Has() {
+			return m.Clone(clone)
+		}
+		method = m.SignalVal.Normalize()
+	}
+	for _, c := range s.Cases {
+		v := IntoEval(c.Expression).Eval(vm, scope, false)
+		if v.Signal.Has() {
+			return v.Clone(clone)
+		}
+		var ok bool
+		if method != nil {
+			res := Call(vm, method, []*object.Value{v.SignalVal.Normalize()}, false, s.Pos, nil)
+			if res.Signal.Has() {
+				return res.Clone(clone)
+			}
+			ok, res = IntoBool(vm, res.SignalVal.Normalize(), c.Pos)
+		} else {
+			ok = expr.SignalVal.Normalize().Equals(v.SignalVal.Normalize())
+		}
+
+		if ok {
+			return BlockExpression(c.Block).Eval(vm, scope, clone)
+		}
+	}
+
+	if s.Default != nil {
+		return BlockExpression(*s.Default).Eval(vm, scope, clone)
+	}
+	return object.ExpressionResult{Trace: stacktrace.New(s.Pos)}
+}
 
 func (u UsingExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
 	expr := IntoEval(u.Expression).Eval(vm, scope, false)
@@ -153,7 +263,6 @@ func (i ImportExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*obje
 	if i.Name != nil {
 		name = i.Name.Ident
 	}
-
 	scope.Set(name, &object.Value{
 		InnerValue: object.Object{Map: res},
 	})
@@ -198,31 +307,88 @@ func (m ModExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.
 }
 
 func (a AssigmentExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
-	if len(a.Left) != len(a.Right) {
-		return object.ExpressionResult{
-			Trace:  stacktrace.New(a.Pos),
-			Signal: signal.SignalRaise,
-			SignalVal: &object.Value{InnerValue: object.Error{
-				Code:    errors.ValueError,
-				Message: fmt.Sprintf("expected %d right values, got %d", len(a.Left), len(a.Right)),
-			}},
-		}
+	right := IntoEval(a.Right).Eval(vm, scope, true)
+	if right.Signal.Has() {
+		return right.Clone(clone)
 	}
-	for i, v := range a.Left {
-		left := IntoEval(v).Eval(vm, scope, false)
+	if a.ExpressionLeft != nil {
+		left := IntoEval(a.ExpressionLeft.Expression).Eval(vm, scope, false)
 		if left.Signal.Has() {
 			return left.Clone(clone)
 		}
-		right := IntoEval(a.Right[i]).Eval(vm, scope, true)
-		if right.Signal.Has() {
-			return right.Clone(clone)
-		}
-		expr := RunBin(vm, scope, false, left.SignalVal.Normalize(), right.SignalVal.Normalize(), a.Operator, a.Pos)
+		expr := RunBin(vm, scope, false, left.SignalVal.Normalize(), right.SignalVal.Normalize(), a.ExpressionLeft.Operator, a.Pos)
 		if expr.Signal.Has() {
 			return expr.Clone(clone)
 		}
 		*left.SignalVal.Normalize() = *expr.SignalVal.Normalize()
+	} else if arr, ok := right.SignalVal.Normalize().InnerValue.(object.Array); ok {
+		for i, v := range a.Left {
+			if v.Name != nil {
+				return object.ExpressionResult{
+					Trace:  stacktrace.New(a.Pos),
+					Signal: signal.SignalRaise,
+					SignalVal: &object.Value{
+						InnerValue: object.Error{
+							Code:    errors.SyntaxError,
+							Message: fmt.Sprintf("unexpected ': %s', expected ',' or '='", v.Name.Ident),
+						},
+					},
+				}
+			}
+			expr := IntoEval(v.Expression).Eval(vm, scope, false)
+			if expr.Signal.Has() {
+				return expr.Clone(clone)
+			}
+			if len(arr.Elements) <= i {
+				return object.ExpressionResult{Trace: stacktrace.New(a.Pos),
+					Signal: signal.SignalRaise,
+					SignalVal: &object.Value{InnerValue: object.Error{
+						Code:    errors.ValueError,
+						Message: fmt.Sprintf("expected at least %d elements, has %d", i, len(arr.Elements)),
+					}},
+				}
+			}
+			*expr.SignalVal.Normalize() = *arr.Elements[i]
+		}
+	} else if _, ok := right.SignalVal.Normalize().InnerValue.(object.Object); ok {
+		for _, v := range a.Left {
+			var name ast.IdentExpression
+			if v.Name != nil {
+				name = *v.Name
+			} else if ident, ok := v.Expression.(ast.IdentExpression); ok {
+				name = ident
+			} else {
+				return object.ExpressionResult{Trace: stacktrace.New(v.Pos),
+					Signal: signal.SignalRaise,
+					SignalVal: &object.Value{InnerValue: object.Error{
+						Code:    errors.ValueError,
+						Message: "please specify the key by using '<expression>: <key>' instead of '<expression>",
+					}},
+				}
+			}
+			expr := IntoEval(v.Expression).Eval(vm, scope, false)
+			if expr.Signal.Has() {
+				return expr.Clone(clone)
+			}
+			attr := GetAttr(right.SignalVal.Normalize(), name.Ident, v.Pos)
+			if attr.Signal.Has() {
+				return attr
+			}
+			*expr.SignalVal.Normalize() = *attr.SignalVal.Normalize()
+		}
+	} else {
+		return object.ExpressionResult{
+			Signal: signal.SignalRaise,
+			SignalVal: &object.Value{
+				InnerValue: object.Error{
+					Code:    errors.TypeError,
+					Message: fmt.Sprintf("unsupported type %s for pattern matching", right.SignalVal.Normalize().Type()),
+				},
+			}, Trace: stacktrace.New(a.Pos),
+		}
+
 	}
+
 	return object.ExpressionResult{Trace: stacktrace.New(a.Pos)}
 }
 
@@ -317,10 +483,6 @@ condition:
 	}
 	if (w.IsWhile && !ok) || (!w.IsWhile && ok) {
 		goto after
-	}
-	expr = IntoEval(w.After).Eval(vm, scope, false)
-	if expr.Signal.Has() {
-		return expr.Clone(clone)
 	}
 block:
 	expr = BlockExpression(w.Block).Eval(vm, scope, false)
