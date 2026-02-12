@@ -344,7 +344,7 @@ func (a AssigmentExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*o
 					Signal: signal.SignalRaise,
 					SignalVal: &object.Value{InnerValue: object.Error{
 						Code:    errors.ValueError,
-						Message: fmt.Sprintf("expected at least %d elements, has %d", i, len(arr.Elements)),
+						Message: fmt.Sprintf("expected at least %d elements, has %d", i+1, len(arr.Elements)),
 					}},
 				}
 			}
