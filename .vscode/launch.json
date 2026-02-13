@@ -12,8 +12,8 @@
             "program": "cmd/main.go",
             "env": {
                 "AQUA_PATH":"path"
-            }
+            },
+            "args": ["new", "prj", "--lib"]
         }
-
     ]
 }

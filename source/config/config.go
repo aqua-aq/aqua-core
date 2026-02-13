@@ -17,7 +17,7 @@ type Config struct {
 
 var defaultConfig = Config{
 	Name:    "<unknown project>",
-	Version: "1.0.0",
+	Version: "0.1.0",
 	Main:    env.MAIN,
 }
 

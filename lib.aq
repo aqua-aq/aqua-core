@@ -1,5 +1,0 @@
-let a = 10
-sub hello() 
-    println("Hello world!")
-end
-export a, hello

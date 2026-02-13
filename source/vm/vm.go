@@ -21,9 +21,10 @@ type VM[T any] struct {
 	LibVms *VMs[T]
 	Run    func(path, name string, vm *VM[T]) (map[string]T, error)
 	Config config.Config
+	Args   []string
 }
 
-func New[T any](config config.Config, paths *Paths[T], libVms *VMs[T], run func(path, name string, vm *VM[T]) (map[string]T, error)) (*VM[T], error) {
+func New[T any](config config.Config, paths *Paths[T], libVms *VMs[T], run func(path, name string, vm *VM[T]) (map[string]T, error), args []string) (*VM[T], error) {
 	err := ResolveDependencies(config.Dependencies)
 	if err != nil {
 		return nil, err
@@ -35,6 +36,7 @@ func New[T any](config config.Config, paths *Paths[T], libVms *VMs[T], run func(
 		LibVms: libVms,
 		Run:    run,
 		Config: config,
+		Args:   args,
 	}, nil
 }
 
@@ -49,7 +51,7 @@ func ResolveDependencies(dependencies map[string]string) error {
 	return nil
 }
 
-func NewAndLoadConfig[T any](path string, paths *Paths[T], libVms *VMs[T], run func(path, name string, vm *VM[T]) (map[string]T, error)) (*VM[T], error) {
+func NewAndLoadConfig[T any](path string, paths *Paths[T], libVms *VMs[T], run func(path, name string, vm *VM[T]) (map[string]T, error), args []string) (*VM[T], error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -59,5 +61,5 @@ func NewAndLoadConfig[T any](path string, paths *Paths[T], libVms *VMs[T], run f
 	if err != nil {
 		return nil, err
 	}
-	return New(config, paths, libVms, run)
+	return New(config, paths, libVms, run, args)
 }

@@ -9,7 +9,6 @@ import (
 	"github.com/vandi37/aqua/source/errors"
 	"github.com/vandi37/aqua/source/object"
 	"github.com/vandi37/aqua/source/vm"
-	"github.com/vandi37/aqua/utils"
 )
 
 type ImportType byte
@@ -34,7 +33,7 @@ func ParseImport(current string, s string, vm *vm.VM[*object.Value]) (string, st
 		s += "." + env.FILE_EXTENSION
 	}
 
-	if first, second := utils.SplitOnce(s); second != "" {
+	if first, second, _ := strings.Cut(s, ":"); second != "" {
 		if dep, ok := vm.Config.Dependencies[first]; ok {
 			return dep, filepath.Join(dep, second), TypeDependence, nil
 		}
@@ -64,7 +63,7 @@ func GetImport(current string, s string, virtualMachine *vm.VM[*object.Value]) (
 	case TypeDependenceMain, TypeDependence:
 		depVm, ok := (*virtualMachine.LibVms)[dep]
 		if !ok {
-			depVm, err = vm.NewAndLoadConfig(filepath.Join(dep, env.CONFIG), virtualMachine.Paths, virtualMachine.LibVms, virtualMachine.Run)
+			depVm, err = vm.NewAndLoadConfig(filepath.Join(dep, env.CONFIG), virtualMachine.Paths, virtualMachine.LibVms, virtualMachine.Run, []string{})
 			if err != nil {
 				return "", nil, err
 			}

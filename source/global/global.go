@@ -216,6 +216,23 @@ func Code(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value]) object.Sub
 	})
 }
 
+func StringCode(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value]) object.SubroutineResult {
+	first, ok := scope.Get(firstArgument)
+	if !ok {
+		return Raise("", object.Error{
+			Code:    errors.ValueError,
+			Message: fmt.Sprintf("expected argument %s", firstArgument),
+		})
+	}
+	if err, ok := first.Normalize().InnerValue.(object.Error); ok {
+		return object.SubroutineResult{SignalVal: &object.Value{InnerValue: object.Number{Value: float64(err.Code)}}, Trace: stacktrace.New(pos.BuildInPos("code"))}
+	}
+	return Raise("code", object.Error{
+		Code:    errors.TypeError,
+		Message: fmt.Sprintf("can't get code of %s", first.Normalize().Type()),
+	})
+}
+
 func Message(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value]) object.SubroutineResult {
 	first, ok := scope.Get(firstArgument)
 	if !ok {
@@ -272,6 +289,27 @@ func Error(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value]) object.Su
 	return object.SubroutineResult{SignalVal: &object.Value{InnerValue: object.Error{Code: errors.Code(intCode), Message: strMessage}}, Trace: stacktrace.New(pos.BuildInPos("error"))}
 }
 
+var ExitArguments = object.Arguments{Elements: []object.Argument{{
+	Name:    firstArgument,
+	Default: &object.Value{InnerValue: object.Number{Value: 0}},
+}}}
+
+func Exit(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value]) object.SubroutineResult {
+	first, ok := scope.Get(firstArgument)
+	if !ok {
+		return Raise("exit", object.Error{
+			Code:    errors.ValueError,
+			Message: fmt.Sprintf("expected argument %s", firstArgument),
+		})
+	}
+	intCode, err := eval.IntoInt(vm, first.Normalize(), pos.BuildInPos("exit"))
+	if sErr := err.IntoSubroutineResultStrict(pos.BuildInPos("exit")); err.Signal.Has() {
+		return sErr
+	}
+	os.Exit(intCode)
+	return object.SubroutineResult{Trace: stacktrace.New(pos.BuildInPos("exit"))}
+}
+
 func GenerateBuildIn(scope scope.Scope[*object.Value]) {
 	AddGlobalFunction("println", Print(true, "println"), PrintArgs, scope)
 	AddGlobalFunction("print", Print(false, "print"), PrintArgs, scope)
@@ -284,5 +322,24 @@ func GenerateBuildIn(scope scope.Scope[*object.Value]) {
 	AddGlobalFunction("code", Code, FirstArguments, scope)
 	AddGlobalFunction("message", Message, FirstArguments, scope)
 	AddGlobalFunction("error", Error, ErrorArguments, scope)
+	AddGlobalFunction("exit", Exit, ExitArguments, scope)
 	scope.Set("stop", &object.Value{InnerValue: object.Error{Code: errors.IteratorStop}})
+	scope.Set("SyntaxError", &object.Value{InnerValue: object.Number{
+		Value: float64(errors.SyntaxError),
+	}})
+	scope.Set("ImportError", &object.Value{InnerValue: object.Number{
+		Value: float64(errors.ImportError),
+	}})
+	scope.Set("TypeError", &object.Value{InnerValue: object.Number{
+		Value: float64(errors.TypeError),
+	}})
+	scope.Set("ValueError", &object.Value{InnerValue: object.Number{
+		Value: float64(errors.ValueError),
+	}})
+	scope.Set("InvalidSignal", &object.Value{InnerValue: object.Number{
+		Value: float64(errors.InvalidSignal),
+	}})
+	scope.Set("IteratorStop", &object.Value{InnerValue: object.Number{
+		Value: float64(errors.IteratorStop),
+	}})
 }
