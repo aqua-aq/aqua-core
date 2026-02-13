@@ -144,7 +144,7 @@ func Run(_ []string, optionals map[string]string, _ map[string]struct{}, args []
 		path = file
 	}
 
-	_, err = run.Run(path, "main", vm)
+	_, err = run.Run(filepath.Join(project, path), "main", vm)
 	if err != nil {
 		return err
 	}
