@@ -59,7 +59,6 @@ const (
 	TokenNull
 	TokenInfinity
 	TokenNan
-	TokenStop
 
 	TokenPlus
 	TokenMinus
@@ -75,13 +74,16 @@ const (
 	TokenLt
 	TokenGe
 	TokenLe
+	TokenQuestion
 
 	TokenAssign
 	TokenDots // ...
 	TokenPtr
 	TokenColumn
 	TokenDot
+	TokenQuestionDot
 	TokenMethod
+	TokenQuestionMethod
 	TokenBind
 	TokenComma
 
@@ -140,8 +142,6 @@ func (t TokenType) String() string {
 		return "<mod>"
 	case TokenExport:
 		return "<export>"
-	case TokenStop:
-		return "<stop>"
 	case TokenUsing:
 		return "<using>"
 	case TokenImport:
@@ -212,12 +212,18 @@ func (t TokenType) String() string {
 		return "<assign>"
 	case TokenDots:
 		return "<dots>"
+	case TokenQuestion:
+		return "<question>"
 	case TokenPtr:
 		return "<ptr>"
 	case TokenColumn:
 		return "<column>"
 	case TokenDot:
 		return "<dot>"
+	case TokenQuestionDot:
+		return "<question dot>"
+	case TokenQuestionMethod:
+		return "<question method>"
 	case TokenMethod:
 		return "<method>"
 	case TokenBind:
@@ -321,6 +327,12 @@ func (t TokenType) IntoBin() (operators.Operator, bool) {
 		return operators.GreaterEqual, true
 	case TokenLe:
 		return operators.LessEqual, true
+	case TokenQuestionDot:
+		return operators.QuestionDot, true
+	case TokenQuestion:
+		return operators.Question, true
+	case TokenQuestionMethod:
+		return operators.QuestionMethod, true
 	case TokenDot:
 		return operators.Dot, true
 	case TokenMethod:

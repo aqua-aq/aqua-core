@@ -42,8 +42,8 @@ func RunBin(
 	}
 
 	if operator == operators.Bind {
-		if AttrExists(right.Normalize(), operator.Method()) {
-			expr := GetAttrMethod(right.Normalize(), operator.Method(), pos)
+		if method, ok := operator.Method(); ok && AttrExists(right.Normalize(), method) {
+			expr := GetAttrMethod(right.Normalize(), method, pos)
 			if expr.Signal.Has() {
 				return expr.Clone(clone)
 			}
@@ -55,8 +55,8 @@ func RunBin(
 		}
 	}
 	if operator == operators.In {
-		if AttrExists(right.Normalize(), operator.Method()) {
-			expr := GetAttrMethod(right.Normalize(), operator.Method(), pos)
+		if method, ok := operator.Method(); ok && AttrExists(right.Normalize(), method) {
+			expr := GetAttrMethod(right.Normalize(), method, pos)
 			if expr.Signal.Has() {
 				return expr.Clone(clone)
 			}
@@ -64,7 +64,9 @@ func RunBin(
 		}
 		switch r := right.Normalize().InnerValue.(type) {
 		case object.Array:
-			return object.ExpressionResult{SignalVal: &object.Value{InnerValue: object.Bool{Value: slices.Contains(r.Elements, left.Normalize())}}, Trace: stacktrace.New(pos)}
+			return object.ExpressionResult{SignalVal: &object.Value{InnerValue: object.Bool{Value: slices.ContainsFunc(r.Elements, func(e *object.Value) bool {
+				return left.Normalize().Equals(e.Normalize())
+			})}}, Trace: stacktrace.New(pos)}
 		case object.String:
 			str, expr := IntoString(vm, left.Normalize(), pos)
 			if expr.Signal.Has() {
@@ -80,14 +82,25 @@ func RunBin(
 			return object.ExpressionResult{SignalVal: &object.Value{InnerValue: object.Bool{Value: ok}}, Trace: stacktrace.New(pos)}
 		}
 	}
-	if AttrExists(left.Normalize(), operator.Method()) {
-		expr := GetAttrMethod(left.Normalize(), operator.Method(), pos)
+	if method, ok := operator.Method(); ok && AttrExists(left.Normalize(), method) {
+		expr := GetAttrMethod(left.Normalize(), method, pos)
 		if expr.Signal.Has() {
 			return expr.Clone(clone)
 		}
 		return Call(vm, expr.SignalVal, []*object.Value{right.Normalize()}, clone, pos, nil).Clone(clone)
 	}
-
+	if operator == operators.Question {
+		if left.IsNull() {
+			return object.ExpressionResult{
+				SignalVal: right,
+				Trace:     stacktrace.New(pos),
+			}.Clone(clone)
+		}
+		return object.ExpressionResult{
+			SignalVal: left,
+			Trace:     stacktrace.New(pos),
+		}.Clone(clone)
+	}
 	if operator == operators.Equal {
 		return object.ExpressionResult{
 			SignalVal: &object.Value{

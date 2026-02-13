@@ -35,6 +35,8 @@ func (l *Lexer) InitDoubleChar() {
 	l.DoubleChar[[2]rune{'-', '>'}] = tokens.TokenBind
 	l.DoubleChar[[2]rune{'+', '+'}] = tokens.TokenIncrement
 	l.DoubleChar[[2]rune{'-', '-'}] = tokens.TokenDecrement
+	l.DoubleChar[[2]rune{'?', '.'}] = tokens.TokenQuestionDot
+	l.DoubleChar[[2]rune{'?', '?'}] = tokens.TokenQuestion
 }
 
 func (l *Lexer) InitTripleChar() {
@@ -79,7 +81,6 @@ func (l *Lexer) InitKeywords() {
 	l.KeyWords["null"] = tokens.TokenNull
 	l.KeyWords["infinity"] = tokens.TokenInfinity
 	l.KeyWords["nan"] = tokens.TokenNan
-	l.KeyWords["stop"] = tokens.TokenStop
 }
 
 func (l *Lexer) Init() {

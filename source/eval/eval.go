@@ -392,7 +392,7 @@ func (a AssigmentExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*o
 
 	}
 
-	return object.ExpressionResult{Trace: stacktrace.New(a.Pos)}
+	return right.Clone(clone)
 }
 
 func (i IdentExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
@@ -773,9 +773,13 @@ func (b BinExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.
 		return left.Clone(clone)
 	}
 
-	if b.Operator == operators.Dot || b.Operator == operators.Method {
+	if b.Operator == operators.Dot || b.Operator == operators.Method || b.Operator == operators.QuestionDot {
 		if right, ok := b.Right.(ast.IdentExpression); ok {
-			if b.Operator == operators.Dot {
+			if (b.Operator == operators.QuestionDot || b.Operator == operators.QuestionMethod) &&
+				left.SignalVal.Normalize().IsNull() {
+				return left
+			}
+			if b.Operator == operators.Dot || b.Operator == operators.QuestionDot {
 				return GetAttr(left.SignalVal.Normalize(), right.Ident, b.Pos).Clone(clone)
 			}
 			return GetAttrMethod(left.SignalVal.Normalize(), right.Ident, b.Pos).Clone(clone)

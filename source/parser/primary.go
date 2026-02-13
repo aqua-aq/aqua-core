@@ -4,7 +4,6 @@ import (
 	"math"
 
 	"github.com/vandi37/aqua/source/ast"
-	"github.com/vandi37/aqua/source/errors"
 	"github.com/vandi37/aqua/source/lexer/tokens"
 	"github.com/vandi37/aqua/source/power"
 	"github.com/vandi37/aqua/source/signal"
@@ -67,11 +66,6 @@ func (p *Parser) PrimaryExpression() (ast.Expression, error) {
 		return ast.NumDec{Value: math.Inf(1), Pos: next.Pos}, nil
 	case tokens.TokenNan:
 		return ast.NumDec{Value: math.NaN(), Pos: next.Pos}, nil
-	case tokens.TokenStop:
-		return ast.ErrorDec{Value: errors.Error{
-			Code:    errors.IteratorStop,
-			Message: "",
-		}, Pos: next.Pos}, nil
 	case tokens.TokenParenthesisOpened:
 		expr, err := p.Expression(power.PowerLowest, false)
 		if err != nil {

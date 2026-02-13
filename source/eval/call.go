@@ -42,8 +42,8 @@ func Call(vm *vm.VM[*object.Value], sub *object.Value, args []*object.Value, clo
 	subScope.Set(keywords.It, method.It.Normalize())
 	object.ParseArgs(method.Subroutine.Arguments, args, subScope)
 	var res object.SubroutineResult
-	if method.Subroutine.BuildIn != nil {
-		res = method.Subroutine.BuildIn(vm, subScope)
+	if method.Subroutine.BuiltIn != nil {
+		res = method.Subroutine.BuiltIn(vm, subScope)
 	} else {
 		expr := RunBlock(BlockExpression(method.Subroutine.Code), vm, subScope, clone, export)
 		res, ok = expr.IntoSubroutineResult()

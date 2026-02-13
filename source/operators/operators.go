@@ -29,12 +29,15 @@ const (
 	GreaterEqual
 	LessEqual
 
+	Question
 	In
 	Index
 	Bind
 
 	Dot
+	QuestionDot
 	Method
+	QuestionMethod
 )
 
 func (o Operator) String() string {
@@ -73,14 +76,20 @@ func (o Operator) String() string {
 		return ">="
 	case LessEqual:
 		return "<="
+	case Question:
+		return "??"
 	case In:
 		return "in"
 	case Index:
 		return "[]"
 	case Dot:
 		return "."
+	case QuestionDot:
+		return "?."
 	case Method:
 		return ".>"
+	case QuestionMethod:
+		return "?.>"
 	case Bind:
 		return "->"
 	default:
@@ -88,56 +97,56 @@ func (o Operator) String() string {
 	}
 }
 
-func (o Operator) Method() string {
+func (o Operator) Method() (string, bool) {
 	switch o {
 	case Plus:
-		return keywords.Add
+		return keywords.Add, true
 	case Minus:
-		return keywords.Sub
+		return keywords.Sub, true
 	case Multiply:
-		return keywords.Mul
+		return keywords.Mul, true
 	case Divide:
-		return keywords.Div
+		return keywords.Div, true
 	case Modulo:
-		return keywords.Mod
+		return keywords.Mod, true
 	case StrongDivide:
-		return keywords.IDiv
+		return keywords.IDiv, true
 	case And:
-		return keywords.Add
+		return keywords.Add, true
 	case Or:
-		return keywords.Or
+		return keywords.Or, true
 	case Xor:
-		return keywords.Xor
+		return keywords.Xor, true
 	case Shr:
-		return keywords.Shr
+		return keywords.Shr, true
 	case Shl:
-		return keywords.Shl
+		return keywords.Shl, true
 	case Equal:
-		return keywords.Eq
+		return keywords.Eq, true
 	case NotEqual:
-		return keywords.Ne
+		return keywords.Ne, true
 	case Greater:
-		return keywords.Gt
+		return keywords.Gt, true
 	case Less:
-		return keywords.Lt
+		return keywords.Lt, true
 	case GreaterEqual:
-		return keywords.Ge
+		return keywords.Ge, true
 	case LessEqual:
-		return keywords.Le
+		return keywords.Le, true
 	case In:
-		return keywords.In
+		return keywords.In, true
 	case Index:
-		return keywords.Index
+		return keywords.Index, true
 	case Bind:
-		return keywords.Bind
+		return keywords.Bind, true
 	default:
-		return ""
+		return "", false
 	}
 }
 
 func (o Operator) IsValidInAssign() bool {
 	switch o {
-	case None, Plus, Minus, Multiply, Divide, Modulo, StrongDivide, And, Or, Xor, Shr, Shl, In, Bind:
+	case None, Plus, Minus, Multiply, Divide, Modulo, StrongDivide, And, Or, Xor, Shr, Shl, Question, In, Bind:
 		return true
 	default:
 		return false
@@ -190,6 +199,8 @@ func (o PrefixOperator) Method() string {
 
 func (o Operator) Power() power.BindingPower {
 	switch o {
+	case Question:
+		return power.PowerQuestion
 	case Or:
 		return power.PowerOr
 	case And:
@@ -208,7 +219,7 @@ func (o Operator) Power() power.BindingPower {
 		return power.PowerShift
 	case Bind:
 		return power.PowerBind
-	case Index, Dot, Method:
+	case Index, Dot, Method, QuestionDot, QuestionMethod:
 		return power.PowerPostfix
 	default:
 		return power.PowerLowest

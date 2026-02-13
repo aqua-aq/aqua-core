@@ -4,10 +4,12 @@ const (
 	It = "it"
 
 	Bool    = "__bool__"
+	Number  = "__number__"
 	Iter    = "__iter__"
 	Display = "__display__"
 	Call    = "__call__"
 	Slice   = "__slice__"
+	Len     = "__length__"
 
 	Neg = "__neg__"
 	Not = "__not__"

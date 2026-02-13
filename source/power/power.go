@@ -5,6 +5,7 @@ type BindingPower byte
 const (
 	PowerLowest         BindingPower = iota
 	PowerAssignment                  // `=`
+	PowerQuestion                    // `??`
 	PowerOr                          // `or`
 	PowerAnd                         // `and`
 	PowerXor                         // `xor`

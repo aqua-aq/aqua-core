@@ -45,7 +45,7 @@ type (
 		Scope     scope.Scope[*Value]
 		Prototype *Value
 		// optional
-		BuildIn func(*vm.VM[*Value], scope.Scope[*Value]) SubroutineResult
+		BuiltIn func(*vm.VM[*Value], scope.Scope[*Value]) SubroutineResult
 		// optional code
 		Code ast.BlockExpression
 	}

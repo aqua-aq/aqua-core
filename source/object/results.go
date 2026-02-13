@@ -3,7 +3,9 @@ package object
 import (
 	"fmt"
 
+	"github.com/vandi37/aqua/pkg/pos"
 	"github.com/vandi37/aqua/pkg/stacktrace"
+	"github.com/vandi37/aqua/source/errors"
 	"github.com/vandi37/aqua/source/signal"
 )
 
@@ -44,6 +46,20 @@ func (s ExpressionResult) IntoSubroutineResult() (SubroutineResult, bool) {
 		Trace:     s.Trace,
 	}, true
 
+}
+
+func (s ExpressionResult) IntoSubroutineResultStrict(pos pos.Pos) SubroutineResult {
+	res, ok := s.IntoSubroutineResult()
+	if !ok {
+		return SubroutineResult{Trace: stacktrace.New(pos),
+			Signal: signal.SubroutineSignalRaise,
+			SignalVal: &Value{InnerValue: Error{
+				Code:    errors.InvalidSignal,
+				Message: fmt.Sprintf("expected none/return/raise, got %v", res.Signal),
+			}},
+		}
+	}
+	return res
 }
 func (s ExpressionResult) Clone(need bool) ExpressionResult {
 	if !need {
