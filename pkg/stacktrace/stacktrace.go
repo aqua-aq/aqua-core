@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/vandi37/aqua/pkg/pos"
+	"github.com/aqua-aq/aqua/pkg/pos"
 )
 
 type Frame struct {

@@ -6,14 +6,14 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/vandi37/aqua/pkg/pos"
-	"github.com/vandi37/aqua/pkg/scope"
-	"github.com/vandi37/aqua/pkg/stacktrace"
-	"github.com/vandi37/aqua/source/errors"
-	"github.com/vandi37/aqua/source/object"
-	"github.com/vandi37/aqua/source/operators"
-	"github.com/vandi37/aqua/source/object/signal"
-	"github.com/vandi37/aqua/source/vm"
+	"github.com/aqua-aq/aqua/pkg/pos"
+	"github.com/aqua-aq/aqua/pkg/scope"
+	"github.com/aqua-aq/aqua/pkg/stacktrace"
+	"github.com/aqua-aq/aqua/source/errors"
+	"github.com/aqua-aq/aqua/source/object"
+	"github.com/aqua-aq/aqua/source/operators"
+	"github.com/aqua-aq/aqua/source/object/signal"
+	"github.com/aqua-aq/aqua/source/vm"
 )
 
 func toNumber[T int | float64](b bool) T {

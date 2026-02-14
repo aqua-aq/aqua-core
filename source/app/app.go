@@ -6,14 +6,14 @@ import (
 	"path/filepath"
 
 	"github.com/pelletier/go-toml/v2"
-	"github.com/vandi37/aqua/env"
-	"github.com/vandi37/aqua/pkg/cli"
-	"github.com/vandi37/aqua/pkg/fatal"
-	"github.com/vandi37/aqua/pkg/pos"
-	"github.com/vandi37/aqua/source/config"
-	"github.com/vandi37/aqua/source/object"
-	"github.com/vandi37/aqua/source/run"
-	"github.com/vandi37/aqua/source/vm"
+	"github.com/aqua-aq/aqua/env"
+	"github.com/aqua-aq/aqua/pkg/cli"
+	"github.com/aqua-aq/aqua/pkg/fatal"
+	"github.com/aqua-aq/aqua/pkg/pos"
+	"github.com/aqua-aq/aqua/source/config"
+	"github.com/aqua-aq/aqua/source/object"
+	"github.com/aqua-aq/aqua/source/run"
+	"github.com/aqua-aq/aqua/source/vm"
 )
 
 var App = cli.CLI{

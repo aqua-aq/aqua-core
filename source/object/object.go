@@ -7,10 +7,10 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/vandi37/aqua/pkg/scope"
-	"github.com/vandi37/aqua/source/ast"
-	"github.com/vandi37/aqua/source/errors"
-	"github.com/vandi37/aqua/source/vm"
+	"github.com/aqua-aq/aqua/pkg/scope"
+	"github.com/aqua-aq/aqua/source/ast"
+	"github.com/aqua-aq/aqua/source/errors"
+	"github.com/aqua-aq/aqua/source/vm"
 )
 
 type InnerValue interface {

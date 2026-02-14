@@ -1,8 +1,8 @@
 package operators
 
 import (
-	"github.com/vandi37/aqua/source/keywords"
-	"github.com/vandi37/aqua/source/power"
+	"github.com/aqua-aq/aqua/source/keywords"
+	"github.com/aqua-aq/aqua/source/power"
 )
 
 type Operator byte

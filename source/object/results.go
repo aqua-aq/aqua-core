@@ -3,10 +3,10 @@ package object
 import (
 	"fmt"
 
-	"github.com/vandi37/aqua/pkg/pos"
-	"github.com/vandi37/aqua/pkg/stacktrace"
-	"github.com/vandi37/aqua/source/errors"
-	"github.com/vandi37/aqua/source/object/signal"
+	"github.com/aqua-aq/aqua/pkg/pos"
+	"github.com/aqua-aq/aqua/pkg/stacktrace"
+	"github.com/aqua-aq/aqua/source/errors"
+	"github.com/aqua-aq/aqua/source/object/signal"
 )
 
 type ExpressionResult struct {

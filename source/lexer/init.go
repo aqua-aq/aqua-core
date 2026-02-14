@@ -1,6 +1,6 @@
 package lexer
 
-import "github.com/vandi37/aqua/source/lexer/tokens"
+import "github.com/aqua-aq/aqua/source/lexer/tokens"
 
 func (l *Lexer) InitOneChar() {
 	l.OneChar['+'] = tokens.TokenPlus

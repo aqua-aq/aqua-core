@@ -3,9 +3,9 @@ package lexer
 import (
 	"unicode"
 
-	"github.com/vandi37/aqua/pkg/float"
-	"github.com/vandi37/aqua/pkg/pos"
-	"github.com/vandi37/aqua/source/lexer/tokens"
+	"github.com/aqua-aq/aqua/pkg/float"
+	"github.com/aqua-aq/aqua/pkg/pos"
+	"github.com/aqua-aq/aqua/source/lexer/tokens"
 )
 
 func isDigitInBase(r rune, base int) bool {

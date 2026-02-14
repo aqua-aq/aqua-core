@@ -1,4 +1,4 @@
-module github.com/vandi37/aqua
+module github.com/aqua-aq/aqua
 
 go 1.24.2
 

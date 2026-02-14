@@ -1,10 +1,10 @@
 package eval
 
 import (
-	"github.com/vandi37/aqua/pkg/scope"
-	"github.com/vandi37/aqua/source/object"
-	"github.com/vandi37/aqua/source/object/signal"
-	"github.com/vandi37/aqua/source/vm"
+	"github.com/aqua-aq/aqua/pkg/scope"
+	"github.com/aqua-aq/aqua/source/object"
+	"github.com/aqua-aq/aqua/source/object/signal"
+	"github.com/aqua-aq/aqua/source/vm"
 )
 
 func RunBlock(b BlockExpression, vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool, export map[string]*object.Value) object.ExpressionResult {

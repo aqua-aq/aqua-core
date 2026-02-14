@@ -5,10 +5,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/vandi37/aqua/env"
-	"github.com/vandi37/aqua/source/errors"
-	"github.com/vandi37/aqua/source/object"
-	"github.com/vandi37/aqua/source/vm"
+	"github.com/aqua-aq/aqua/env"
+	"github.com/aqua-aq/aqua/source/errors"
+	"github.com/aqua-aq/aqua/source/object"
+	"github.com/aqua-aq/aqua/source/vm"
 )
 
 type ImportType byte

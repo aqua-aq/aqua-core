@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"unicode/utf8"
 
-	"github.com/vandi37/aqua/pkg/pos"
-	"github.com/vandi37/aqua/source/errors"
+	"github.com/aqua-aq/aqua/pkg/pos"
+	"github.com/aqua-aq/aqua/source/errors"
 )
 
 

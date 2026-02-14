@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/vandi37/aqua/pkg/scope"
-	"github.com/vandi37/aqua/source/ast"
-	"github.com/vandi37/aqua/source/eval"
-	"github.com/vandi37/aqua/source/eval/global"
-	"github.com/vandi37/aqua/source/lexer"
-	"github.com/vandi37/aqua/source/lexer/tokens"
-	"github.com/vandi37/aqua/source/object"
-	"github.com/vandi37/aqua/source/parser"
-	"github.com/vandi37/aqua/source/vm"
+	"github.com/aqua-aq/aqua/pkg/scope"
+	"github.com/aqua-aq/aqua/source/ast"
+	"github.com/aqua-aq/aqua/source/eval"
+	"github.com/aqua-aq/aqua/source/eval/global"
+	"github.com/aqua-aq/aqua/source/lexer"
+	"github.com/aqua-aq/aqua/source/lexer/tokens"
+	"github.com/aqua-aq/aqua/source/object"
+	"github.com/aqua-aq/aqua/source/parser"
+	"github.com/aqua-aq/aqua/source/vm"
 )
 
 func Run(path, name string, vm *vm.VM[*object.Value]) (map[string]*object.Value, error) {

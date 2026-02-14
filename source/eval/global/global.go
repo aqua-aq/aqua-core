@@ -6,15 +6,15 @@ import (
 	"os"
 	"strings"
 
-	"github.com/vandi37/aqua/pkg/pos"
-	"github.com/vandi37/aqua/pkg/scope"
-	"github.com/vandi37/aqua/pkg/stacktrace"
-	"github.com/vandi37/aqua/source/errors"
-	"github.com/vandi37/aqua/source/eval"
-	"github.com/vandi37/aqua/source/keywords"
-	"github.com/vandi37/aqua/source/object"
-	"github.com/vandi37/aqua/source/object/signal"
-	"github.com/vandi37/aqua/source/vm"
+	"github.com/aqua-aq/aqua/pkg/pos"
+	"github.com/aqua-aq/aqua/pkg/scope"
+	"github.com/aqua-aq/aqua/pkg/stacktrace"
+	"github.com/aqua-aq/aqua/source/errors"
+	"github.com/aqua-aq/aqua/source/eval"
+	"github.com/aqua-aq/aqua/source/keywords"
+	"github.com/aqua-aq/aqua/source/object"
+	"github.com/aqua-aq/aqua/source/object/signal"
+	"github.com/aqua-aq/aqua/source/vm"
 )
 
 func AddGlobalFunction(

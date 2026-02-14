@@ -1,10 +1,10 @@
 package parser
 
 import (
-	"github.com/vandi37/aqua/source/ast"
-	"github.com/vandi37/aqua/source/lexer/tokens"
-	"github.com/vandi37/aqua/source/object/signal"
-	"github.com/vandi37/aqua/source/power"
+	"github.com/aqua-aq/aqua/source/ast"
+	"github.com/aqua-aq/aqua/source/lexer/tokens"
+	"github.com/aqua-aq/aqua/source/object/signal"
+	"github.com/aqua-aq/aqua/source/power"
 )
 
 func (p *Parser) ParseBlockExpression(

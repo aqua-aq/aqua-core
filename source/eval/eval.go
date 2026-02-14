@@ -4,16 +4,16 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/vandi37/aqua/pkg/scope"
-	"github.com/vandi37/aqua/pkg/stacktrace"
-	"github.com/vandi37/aqua/source/ast"
-	"github.com/vandi37/aqua/source/errors"
-	"github.com/vandi37/aqua/source/eval/importing"
-	"github.com/vandi37/aqua/source/keywords"
-	"github.com/vandi37/aqua/source/object"
-	"github.com/vandi37/aqua/source/operators"
-	"github.com/vandi37/aqua/source/object/signal"
-	"github.com/vandi37/aqua/source/vm"
+	"github.com/aqua-aq/aqua/pkg/scope"
+	"github.com/aqua-aq/aqua/pkg/stacktrace"
+	"github.com/aqua-aq/aqua/source/ast"
+	"github.com/aqua-aq/aqua/source/errors"
+	"github.com/aqua-aq/aqua/source/eval/importing"
+	"github.com/aqua-aq/aqua/source/keywords"
+	"github.com/aqua-aq/aqua/source/object"
+	"github.com/aqua-aq/aqua/source/operators"
+	"github.com/aqua-aq/aqua/source/object/signal"
+	"github.com/aqua-aq/aqua/source/vm"
 )
 
 type Eval interface {

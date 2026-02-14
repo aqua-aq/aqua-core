@@ -1,10 +1,10 @@
 package ast
 
 import (
-	"github.com/vandi37/aqua/pkg/pos"
-	"github.com/vandi37/aqua/source/errors"
-	"github.com/vandi37/aqua/source/object/signal"
-	"github.com/vandi37/aqua/source/operators"
+	"github.com/aqua-aq/aqua/pkg/pos"
+	"github.com/aqua-aq/aqua/source/errors"
+	"github.com/aqua-aq/aqua/source/object/signal"
+	"github.com/aqua-aq/aqua/source/operators"
 )
 
 type Expression interface {

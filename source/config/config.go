@@ -4,7 +4,7 @@ import (
 	"io"
 
 	"github.com/pelletier/go-toml/v2"
-	"github.com/vandi37/aqua/env"
+	"github.com/aqua-aq/aqua/env"
 )
 
 type Config struct {

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"unicode"
 
-	"github.com/vandi37/aqua/pkg/pos"
-	"github.com/vandi37/aqua/source/errors"
-	"github.com/vandi37/aqua/source/lexer/tokens"
+	"github.com/aqua-aq/aqua/pkg/pos"
+	"github.com/aqua-aq/aqua/source/errors"
+	"github.com/aqua-aq/aqua/source/lexer/tokens"
 )
 
 type Lexer struct {
