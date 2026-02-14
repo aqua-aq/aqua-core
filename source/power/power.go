@@ -14,7 +14,7 @@ const (
 	PowerShift                       // `<<`, `>>`
 	PowerAdditive                    // `+`, `-`
 	PowerMultiplicative              // `*`, `/`, `%` `//`
-	PowerPrefix                      // prefix
+	PowerPrefix                      // `not`, `typeof`, `-`, `&`
 	PowerBind                        // `->`
-	PowerPostfix                     // `[]`, `++`, `--`, `.`, `.>`, `->`
+	PowerPostfix                     // `[]`, `++`, `--`, `.`, `.>`, `?.`, `?.>`
 )
