@@ -107,6 +107,5 @@ func (p *Parser) PrimaryExpression() (ast.Expression, error) {
 			Value:    expr,
 		}, nil
 	}
-	panic(next)
-	// return nil, Unexpected(next.String())
+	return nil, Unexpected(next.String())
 }
