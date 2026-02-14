@@ -18,7 +18,7 @@ func (p *Parser) Expression(bp power.BindingPower, isBind bool) (ast.Expression,
 			break
 		}
 		if peek.Type == tokens.TokenComma || peek.Type == tokens.TokenColumn {
-			if bp >= power.PowerAssignment {
+			if bp >= power.PowerPatternAssigment {
 				break
 			}
 			var name *ast.IdentExpression
@@ -66,12 +66,12 @@ func (p *Parser) Expression(bp power.BindingPower, isBind bool) (ast.Expression,
 			}
 
 		} else if peek.Type == tokens.TokenAssign {
-			if bp >= power.PowerAssignment {
+			if bp >= power.PowerDirectAssignment {
 				break
 			}
 			p.Move()
 			pos := p.pos
-			right, err := p.Expression(power.PowerLowest, false)
+			right, err := p.Expression(power.PowerPatternAssigment, false)
 			if err != nil {
 				return nil, err
 			}
@@ -90,11 +90,11 @@ func (p *Parser) Expression(bp power.BindingPower, isBind bool) (ast.Expression,
 			if peek, ok = p.Peek(1); ok &&
 				bin.IsValidInAssign() &&
 				peek.Type == tokens.TokenAssign {
-				if bp >= power.PowerAssignment {
+				if bp >= power.PowerDirectAssignment {
 					break
 				}
 				p.MoveN(2)
-				right, err := p.Expression(power.PowerLowest, false)
+				right, err := p.Expression(power.PowerPatternAssigment, false)
 				if err != nil {
 					return nil, err
 				}

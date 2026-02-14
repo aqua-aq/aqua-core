@@ -311,9 +311,10 @@ func (a AssigmentExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*o
 		}
 		expr := RunBin(vm, scope, false, left.SignalVal.Normalize(), right.SignalVal.Normalize(), a.ExpressionLeft.Operator, a.Pos)
 		if expr.Signal.Has() {
-			return expr.Clone(clone)
+			return expr
 		}
 		*left.SignalVal.Normalize() = *expr.SignalVal.Normalize()
+		return object.ExpressionResult{Trace: stacktrace.New(a.Pos), SignalVal: left.SignalVal.Normalize()}
 	} else if arr, ok := right.SignalVal.Normalize().InnerValue.(object.Array); ok {
 		for i, v := range a.Left {
 			if v.Name != nil {
@@ -383,8 +384,7 @@ func (a AssigmentExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*o
 		}
 
 	}
-
-	return right
+	return object.ExpressionResult{Trace: stacktrace.New(a.Pos)}
 }
 
 func (i IdentExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {

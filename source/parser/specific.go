@@ -48,7 +48,7 @@ func (p *Parser) ParseArrayDeclaration(end tokens.TokenType) ([]ast.ArrayElement
 		} else if peek.Type == end {
 			break
 		}
-		expr, err := p.Expression(power.PowerAssignment, false)
+		expr, err := p.Expression(power.PowerPatternAssigment, false)
 		if err != nil {
 			return nil, err
 		}
@@ -75,7 +75,7 @@ func (p *Parser) ParseObjectDeclaration() (ast.ObjectDec, error) {
 	for {
 		if peek, ok := p.Peek(0); ok && peek.Type == tokens.TokenDots {
 			p.Move()
-			expr, err := p.Expression(power.PowerAssignment, false)
+			expr, err := p.Expression(power.PowerPatternAssigment, false)
 			if err != nil {
 				return ast.ObjectDec{}, err
 			}
@@ -110,7 +110,7 @@ func (p *Parser) ParseObjectDeclaration() (ast.ObjectDec, error) {
 			if err != nil {
 				return ast.ObjectDec{}, err
 			}
-			expr, err := p.Expression(power.PowerAssignment, false)
+			expr, err := p.Expression(power.PowerPatternAssigment, false)
 			if err != nil {
 				return ast.ObjectDec{}, err
 			}
