@@ -46,6 +46,7 @@ a = 10 >= 10 # greater than or equal
 a = 10 <= 10 # less than or equal
 
 # assigment operations
+a = 10
 a += 10
 a -= 10
 # and so on
@@ -79,10 +80,10 @@ a = a + 10 # adding an element to an array
 a-- # removing an element from the array
 
 # slicing
-# let slice = a[1..]
-# slice = a[..2]
-# slice = a[1..2] # getting a slice of an array
-# slice = a[..] # copying an array
+let slice = a[1:]
+slice = a[:2]
+slice = a[1:2] # getting a slice of an array
+slice = a[:] # copying
 
 # opening arrays
 let b = [...a, 1, 2, 3, 4, 5] # adding all elements of a to b
@@ -92,7 +93,6 @@ a = [10, true]
 
 # comparing
 a = 10 in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] # true
-# a = 10 in 0..9 # false
 
 # objects
 
@@ -112,21 +112,10 @@ b = {
     birthday: "may 3", 
     ...a # adding all properties of a to b
 }
-
-let name = "alice"
-let people = {
-    #- @name {
-        age: 10
-    } -#
-    peter: {
-        age: 14
-    }
-}
-name = "sam"
-# people.@name = {age: 28}
+delete isStudent a # deleting a property
 
 # conditions
-
+a = 10
 if a == 10 
     a += 10
 end
@@ -153,10 +142,30 @@ a = if a == 10 "ten" else "unknown" end
 
 # for in loop
 
-# a = 0
-# for i in 0..10
-#     a += i
-# end
+# technical: range
+sub range(max) 
+    it.max = max
+    return: it
+with {
+    current: 0,
+    sub __iter__()
+        return: it.>next
+    end,
+    sub next()
+        if  it.current >= it.max 
+            raise: stop
+        end
+        let current = it.current
+        it.current++
+        return: current
+    end
+}
+
+
+a = 0
+for i in range(10) # range isn't currently existing in the built-in functions
+    a += i
+end
 
 a = ""
 for i in ["Hello", "World"]
@@ -169,11 +178,9 @@ for i, c in enum ["a", "b", "c", "d"]
     count += i
     s += c
 end
-print(count)
 # for in with objects
 
 count = 0
-print(typeof 0)
 for k, v in {
     peter: 10,
     alice: 17,
@@ -182,18 +189,11 @@ for k, v in {
 }
     if v >= 18 count++ end
 end
-print(count)
 # while loop 
 
 a = 0
 while a < 10 
     a ++
-end
-
-a = 0
-let i = 0
-while i < 10 : i++ # here it does it before each iteration (useless)
-    a += i
 end
 
 # repeat-until loop
@@ -203,19 +203,13 @@ repeat
     a += 1
 until a >= 10
 
-a = 0
-i = 0
-repeat 
-    a += i
-until i >= 10 : i ++ # here it does it after each iteration
-
 # break/continue
-#for i in 0..10
-#     if i == 5 break end
-# end
+for i in range(10)
+    if i == 5 break end
+end
 
 a = 0
-for i in 0..10
+for i in range(10)
     if i == 5 continue end
     a += 1
 end
@@ -223,12 +217,14 @@ end
 # returning values from loops
 
 a = 10
-a = while a < 100 : a ++
+a = while a < 100 
+    a ++
     if a % 10 == 3 break: a * 10 
     elif a / 2 > 37 break: a * 3 end
 end # if finishes without breaking a will be null
 
-a = while a < 100 : a ++
+a = while a < 100
+    a++
     if a == 37 break: true end
 else
     false
@@ -236,9 +232,10 @@ end
 a = 10
 a = repeat
     if a < 10 break: true end
+    a++
 else 
     false
-until a >= 20 : a ++
+until a >= 20 
 
 # subroutines
 
@@ -254,7 +251,7 @@ end
 
 a = [1, 2, 3, 4, 5]->map (sub (v) return: v * 2 end)# binding it
 
-sub push(array, values...)
+sub push(array, ...values)
     return: [...array, ...values]
 end
 
@@ -269,8 +266,8 @@ a = b(20) # 30
 a = b(10) # 40
 
 a = sub (array, p)
-    for v in array
-        array[v] = p(v)
+    for i, v in enum array
+        array[i] = p(v)
     end
     return: array
 end
@@ -322,6 +319,6 @@ mod math
     sub add(a, b) 
         return: a + b
     end
-export math
+export add
 
 a = math.add(10, 20) # 30

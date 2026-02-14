@@ -292,16 +292,7 @@ func (i ImportExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*obje
 }
 
 func (m ModExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
-	expr := IdentExpression(m.Name).Eval(vm, scope, false)
-	if expr.Signal.Has() {
-		return expr.Clone(clone)
-	}
-	str, expr := IntoString(vm, expr.SignalVal.Normalize(), m.Pos)
-	if expr.Signal.Has() {
-		return expr.Clone(clone)
-	}
-
-	expr = DeclareSubroutine(vm, scope, false, fmt.Sprintf("<%s>", str), ast.SubroutineDec{
+	expr := DeclareSubroutine(vm, scope, false, fmt.Sprintf("<%s>", m.Name.Ident), ast.SubroutineDec{
 		Arguments: ast.Arguments{},
 		Body:      m.Body,
 		Prototype: ast.NullDec{Pos: m.Pos},
@@ -318,9 +309,10 @@ func (m ModExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.
 	if expr.Signal.Has() {
 		return expr
 	}
-	return object.ExpressionResult{SignalVal: &object.Value{InnerValue: object.Object{
+	scope.Set(m.Name.Ident, &object.Value{InnerValue: object.Object{
 		Map: export,
-	}},
+	}})
+	return object.ExpressionResult{
 		Trace: stacktrace.New(m.Pos),
 	}
 }
