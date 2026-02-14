@@ -1,4 +1,4 @@
-module github.com/aqua-aq/aqua
+module github.com/aqua-aq/aqua-core
 
 go 1.24.2
 

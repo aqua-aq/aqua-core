@@ -3,10 +3,10 @@ package parser
 import (
 	"math"
 
-	"github.com/aqua-aq/aqua/source/ast"
-	"github.com/aqua-aq/aqua/source/lexer/tokens"
-	"github.com/aqua-aq/aqua/source/object/signal"
-	"github.com/aqua-aq/aqua/source/power"
+	"github.com/aqua-aq/aqua-core/source/ast"
+	"github.com/aqua-aq/aqua-core/source/lexer/tokens"
+	"github.com/aqua-aq/aqua-core/source/object/signal"
+	"github.com/aqua-aq/aqua-core/source/power"
 )
 
 func (p *Parser) PrimaryExpression() (ast.Expression, error) {

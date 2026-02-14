@@ -1,8 +1,8 @@
 package operators
 
 import (
-	"github.com/aqua-aq/aqua/source/keywords"
-	"github.com/aqua-aq/aqua/source/power"
+	"github.com/aqua-aq/aqua-core/source/keywords"
+	"github.com/aqua-aq/aqua-core/source/power"
 )
 
 type Operator byte

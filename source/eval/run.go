@@ -1,15 +1,15 @@
 package eval
 
 import (
-	"github.com/aqua-aq/aqua/pkg/pos"
-	"github.com/aqua-aq/aqua/pkg/scope"
-	"github.com/aqua-aq/aqua/pkg/stacktrace"
-	"github.com/aqua-aq/aqua/source/lexer"
-	"github.com/aqua-aq/aqua/source/object"
-	"github.com/aqua-aq/aqua/source/parser"
-	"github.com/aqua-aq/aqua/source/power"
-	"github.com/aqua-aq/aqua/source/object/signal"
-	"github.com/aqua-aq/aqua/source/vm"
+	"github.com/aqua-aq/aqua-core/pkg/pos"
+	"github.com/aqua-aq/aqua-core/pkg/scope"
+	"github.com/aqua-aq/aqua-core/pkg/stacktrace"
+	"github.com/aqua-aq/aqua-core/source/lexer"
+	"github.com/aqua-aq/aqua-core/source/object"
+	"github.com/aqua-aq/aqua-core/source/parser"
+	"github.com/aqua-aq/aqua-core/source/power"
+	"github.com/aqua-aq/aqua-core/source/object/signal"
+	"github.com/aqua-aq/aqua-core/source/vm"
 )
 
 func Run(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], expression string, pos pos.Pos, clone bool) object.ExpressionResult {

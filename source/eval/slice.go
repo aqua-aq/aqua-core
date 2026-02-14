@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/aqua-aq/aqua/pkg/pos"
-	"github.com/aqua-aq/aqua/pkg/stacktrace"
-	"github.com/aqua-aq/aqua/source/errors"
-	"github.com/aqua-aq/aqua/source/object"
-	"github.com/aqua-aq/aqua/source/object/signal"
+	"github.com/aqua-aq/aqua-core/pkg/pos"
+	"github.com/aqua-aq/aqua-core/pkg/stacktrace"
+	"github.com/aqua-aq/aqua-core/source/errors"
+	"github.com/aqua-aq/aqua-core/source/object"
+	"github.com/aqua-aq/aqua-core/source/object/signal"
 )
 
 func ParseSliceIndex(val *object.Value, length int, pos pos.Pos) (int, object.ExpressionResult) {

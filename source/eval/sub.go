@@ -1,11 +1,11 @@
 package eval
 
 import (
-	"github.com/aqua-aq/aqua/pkg/scope"
-	"github.com/aqua-aq/aqua/pkg/stacktrace"
-	"github.com/aqua-aq/aqua/source/ast"
-	"github.com/aqua-aq/aqua/source/object"
-	"github.com/aqua-aq/aqua/source/vm"
+	"github.com/aqua-aq/aqua-core/pkg/scope"
+	"github.com/aqua-aq/aqua-core/pkg/stacktrace"
+	"github.com/aqua-aq/aqua-core/source/ast"
+	"github.com/aqua-aq/aqua-core/source/object"
+	"github.com/aqua-aq/aqua-core/source/vm"
 )
 
 func DeclareSubroutine(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool, name string, s ast.SubroutineDec) object.ExpressionResult {

@@ -1,10 +1,10 @@
 package parser
 
 import (
-	"github.com/aqua-aq/aqua/source/ast"
-	"github.com/aqua-aq/aqua/source/lexer/tokens"
-	"github.com/aqua-aq/aqua/source/operators"
-	"github.com/aqua-aq/aqua/source/power"
+	"github.com/aqua-aq/aqua-core/source/ast"
+	"github.com/aqua-aq/aqua-core/source/lexer/tokens"
+	"github.com/aqua-aq/aqua-core/source/operators"
+	"github.com/aqua-aq/aqua-core/source/power"
 )
 
 func (p *Parser) Expression(bp power.BindingPower, isBind bool) (ast.Expression, error) {

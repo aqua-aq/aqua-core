@@ -13,8 +13,7 @@
             "env": {
                 "AQUA_PATH":"path"
             },
-            "args": ["new", "prj", "--lib"],
-            "console": "integratedTerminal"
+            "args": ["exec", "main.aq"],
         }
     ]
 }

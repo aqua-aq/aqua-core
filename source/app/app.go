@@ -5,15 +5,15 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/aqua-aq/aqua-core/env"
+	"github.com/aqua-aq/aqua-core/pkg/cli"
+	"github.com/aqua-aq/aqua-core/pkg/fatal"
+	"github.com/aqua-aq/aqua-core/pkg/pos"
+	"github.com/aqua-aq/aqua-core/source/config"
+	"github.com/aqua-aq/aqua-core/source/object"
+	"github.com/aqua-aq/aqua-core/source/run"
+	"github.com/aqua-aq/aqua-core/source/vm"
 	"github.com/pelletier/go-toml/v2"
-	"github.com/aqua-aq/aqua/env"
-	"github.com/aqua-aq/aqua/pkg/cli"
-	"github.com/aqua-aq/aqua/pkg/fatal"
-	"github.com/aqua-aq/aqua/pkg/pos"
-	"github.com/aqua-aq/aqua/source/config"
-	"github.com/aqua-aq/aqua/source/object"
-	"github.com/aqua-aq/aqua/source/run"
-	"github.com/aqua-aq/aqua/source/vm"
 )
 
 var App = cli.CLI{

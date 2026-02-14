@@ -1,7 +1,7 @@
 package object
 
 import (
-	"github.com/aqua-aq/aqua/pkg/scope"
+	"github.com/aqua-aq/aqua-core/pkg/scope"
 )
 
 func ParseArgs(args Arguments, vals []*Value, scope scope.Scope[*Value]) {

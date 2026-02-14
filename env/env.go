@@ -4,7 +4,7 @@ import (
 	"os"
 	"syscall"
 
-	"github.com/aqua-aq/aqua/pkg/fatal"
+	"github.com/aqua-aq/aqua-core/pkg/fatal"
 )
 
 const FILE_EXTENSION = "aq"

@@ -4,8 +4,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/aqua-aq/aqua/env"
-	"github.com/aqua-aq/aqua/source/config"
+	"github.com/aqua-aq/aqua-core/env"
+	"github.com/aqua-aq/aqua-core/source/config"
 )
 
 type Paths[T any] map[string]struct {

@@ -5,13 +5,13 @@ import (
 	"math"
 	"strconv"
 
-	"github.com/aqua-aq/aqua/pkg/pos"
-	"github.com/aqua-aq/aqua/pkg/stacktrace"
-	"github.com/aqua-aq/aqua/source/errors"
-	"github.com/aqua-aq/aqua/source/keywords"
-	"github.com/aqua-aq/aqua/source/object"
-	"github.com/aqua-aq/aqua/source/object/signal"
-	"github.com/aqua-aq/aqua/source/vm"
+	"github.com/aqua-aq/aqua-core/pkg/pos"
+	"github.com/aqua-aq/aqua-core/pkg/stacktrace"
+	"github.com/aqua-aq/aqua-core/source/errors"
+	"github.com/aqua-aq/aqua-core/source/keywords"
+	"github.com/aqua-aq/aqua-core/source/object"
+	"github.com/aqua-aq/aqua-core/source/object/signal"
+	"github.com/aqua-aq/aqua-core/source/vm"
 )
 
 func IntoBool(vm *vm.VM[*object.Value], val *object.Value, pos pos.Pos) (bool, object.ExpressionResult) {
