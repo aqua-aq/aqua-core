@@ -33,7 +33,7 @@ func (p *Parser) ParseArguments() (ast.Arguments, error) {
 		var def ast.Expression
 		if peek.Type == tokens.TokenAssign {
 			p.Move()
-			def, err = p.Expression(power.PowerAssignment, false)
+			def, err = p.Expression(power.PowerLowest, false)
 			if err != nil {
 				return ast.Arguments{}, err
 			}
