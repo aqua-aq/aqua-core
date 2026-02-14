@@ -384,7 +384,7 @@ func (a AssigmentExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*o
 		}
 
 	}
-	return object.ExpressionResult{Trace: stacktrace.New(a.Pos)}
+	return object.ExpressionResult{Trace: stacktrace.New(a.Pos), SignalVal: right.SignalVal.Normalize()}
 }
 
 func (i IdentExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
