@@ -12,7 +12,6 @@ func (p *Parser) Expression(bp power.BindingPower, isBind bool) (ast.Expression,
 	if err != nil {
 		return nil, err
 	}
-
 	for {
 		peek, ok := p.Peek(0)
 		if !ok {
@@ -34,7 +33,7 @@ func (p *Parser) Expression(bp power.BindingPower, isBind bool) (ast.Expression,
 			leftArray := []ast.AssigmentPattern{{Name: name, Expression: left, Pos: peek.Pos}}
 			for peek, _ = p.Peek(0); peek.Type == tokens.TokenComma; peek, _ = p.Peek(0) {
 				p.Move()
-				expr, err := p.Expression(power.PowerAssignment, false)
+				expr, err := p.Expression(power.PowerLowest, false)
 				if err != nil {
 					return nil, err
 				}
@@ -55,7 +54,7 @@ func (p *Parser) Expression(bp power.BindingPower, isBind bool) (ast.Expression,
 				return nil, err
 			}
 			pos := p.pos
-			right, err := p.Expression(power.PowerAssignment, false)
+			right, err := p.Expression(power.PowerLowest, false)
 			if err != nil {
 				return nil, err
 			}
@@ -72,7 +71,7 @@ func (p *Parser) Expression(bp power.BindingPower, isBind bool) (ast.Expression,
 			}
 			p.Move()
 			pos := p.pos
-			right, err := p.Expression(power.PowerAssignment, false)
+			right, err := p.Expression(power.PowerLowest, false)
 			if err != nil {
 				return nil, err
 			}
@@ -95,7 +94,7 @@ func (p *Parser) Expression(bp power.BindingPower, isBind bool) (ast.Expression,
 					break
 				}
 				p.MoveN(2)
-				right, err := p.Expression(power.PowerAssignment, false)
+				right, err := p.Expression(power.PowerLowest, false)
 				if err != nil {
 					return nil, err
 				}
@@ -131,7 +130,11 @@ func (p *Parser) Expression(bp power.BindingPower, isBind bool) (ast.Expression,
 						continue
 					}
 				}
-				right, err := p.Expression(bin.Power(), bin == operators.Bind)
+				power := bin.Power()
+				if bin.IsRight() {
+					power--
+				}
+				right, err := p.Expression(power, bin == operators.Bind)
 				if err != nil {
 					return nil, err
 				}

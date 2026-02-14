@@ -227,3 +227,7 @@ func (o Operator) Power() power.BindingPower {
 		return power.PowerLowest
 	}
 }
+
+func (o Operator) IsRight() bool {
+	return o == Question || o == Bind
+}
