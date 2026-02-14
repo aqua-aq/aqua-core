@@ -1,7 +1,10 @@
 package env
 
 import (
+	"os"
 	"syscall"
+
+	"github.com/vandi37/aqua/pkg/fatal"
 )
 
 const FILE_EXTENSION = "aq"
@@ -14,8 +17,10 @@ func init() {
 	var ok bool
 	AQUA_PATH, ok = syscall.Getenv("AQUA_PATH")
 	if !ok {
-		panic("environment value AQUA_PATH not found ")
+		fatal.Fatal("environment value AQUA_PATH not found")
+		os.Exit(0)
 	}
 }
 
 const LIB_PATH = "libs"
+const VERSION = "aqua v0.1.0-alpha"

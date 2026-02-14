@@ -3,8 +3,8 @@ package parser
 import (
 	"github.com/vandi37/aqua/source/ast"
 	"github.com/vandi37/aqua/source/lexer/tokens"
+	"github.com/vandi37/aqua/source/object/signal"
 	"github.com/vandi37/aqua/source/power"
-	"github.com/vandi37/aqua/source/signal"
 )
 
 func (p *Parser) ParseBlockExpression(

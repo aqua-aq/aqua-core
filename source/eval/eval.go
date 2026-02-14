@@ -8,11 +8,11 @@ import (
 	"github.com/vandi37/aqua/pkg/stacktrace"
 	"github.com/vandi37/aqua/source/ast"
 	"github.com/vandi37/aqua/source/errors"
-	"github.com/vandi37/aqua/source/importing"
+	"github.com/vandi37/aqua/source/eval/importing"
 	"github.com/vandi37/aqua/source/keywords"
 	"github.com/vandi37/aqua/source/object"
 	"github.com/vandi37/aqua/source/operators"
-	"github.com/vandi37/aqua/source/signal"
+	"github.com/vandi37/aqua/source/object/signal"
 	"github.com/vandi37/aqua/source/vm"
 )
 

@@ -13,7 +13,8 @@
             "env": {
                 "AQUA_PATH":"path"
             },
-            "args": ["new", "prj", "--lib"]
+            "args": ["new", "prj", "--lib"],
+            "console": "integratedTerminal"
         }
     ]
 }

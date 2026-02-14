@@ -8,6 +8,8 @@ import (
 	"github.com/pelletier/go-toml/v2"
 	"github.com/vandi37/aqua/env"
 	"github.com/vandi37/aqua/pkg/cli"
+	"github.com/vandi37/aqua/pkg/fatal"
+	"github.com/vandi37/aqua/pkg/pos"
 	"github.com/vandi37/aqua/source/config"
 	"github.com/vandi37/aqua/source/object"
 	"github.com/vandi37/aqua/source/run"
@@ -20,6 +22,7 @@ var App = cli.CLI{
 			"quiet": false,
 		},
 		AllowMoreArgs: true,
+		Run:           Repl,
 	},
 	Commands: map[string]cli.CLI{
 		"help": {
@@ -87,7 +90,7 @@ func Help(_ []string, _ map[string]string, _ map[string]struct{}, _ []string) er
 }
 
 func Version(_ []string, _ map[string]string, _ map[string]struct{}, _ []string) error {
-	fmt.Println("aqua v0.1.0-alpha")
+	fmt.Println(env.VERSION)
 	return nil
 }
 
@@ -169,17 +172,28 @@ func Exec(vals []string, _ map[string]string, _ map[string]struct{}, args []stri
 
 }
 
+func Repl(_ []string, _ map[string]string, flags map[string]struct{}, args []string) error {
+	_, quiet := flags["quiet"]
+
+	vm, err := vm.New(config.DefaultConfig(), &vm.Paths[*object.Value]{}, &vm.VMs[*object.Value]{}, run.Run, args)
+	if err != nil {
+		return err
+	}
+	fmt.Println(env.VERSION)
+	fmt.Println("Type 'break' or 'exit()' or Ctrl+C to exit")
+	return RunRepl(os.Stdin, vm, pos.ConsolePos(1, 0), quiet)
+}
 func Start() {
 	defer func() {
 		if err := recover(); err != nil {
-			fmt.Fprintln(os.Stderr, err)
+			fatal.Fatal(err)
 			os.Exit(1)
 		}
 	}()
 	args := os.Args[1:]
 	err := App.Run(args)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		fatal.Fatal(err)
 		os.Exit(1)
 	}
 }

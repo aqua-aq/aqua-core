@@ -7,7 +7,7 @@ import (
 	"github.com/vandi37/aqua/pkg/scope"
 	"github.com/vandi37/aqua/source/ast"
 	"github.com/vandi37/aqua/source/eval"
-	"github.com/vandi37/aqua/source/global"
+	"github.com/vandi37/aqua/source/eval/global"
 	"github.com/vandi37/aqua/source/lexer"
 	"github.com/vandi37/aqua/source/lexer/tokens"
 	"github.com/vandi37/aqua/source/object"

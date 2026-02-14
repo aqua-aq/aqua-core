@@ -3,8 +3,8 @@ package ast
 import (
 	"github.com/vandi37/aqua/pkg/pos"
 	"github.com/vandi37/aqua/source/errors"
+	"github.com/vandi37/aqua/source/object/signal"
 	"github.com/vandi37/aqua/source/operators"
-	"github.com/vandi37/aqua/source/signal"
 )
 
 type Expression interface {
@@ -179,7 +179,7 @@ type (
 		Left  Expression
 		Start Expression
 		End   Expression
-		Pos pos.Pos
+		Pos   pos.Pos
 	}
 )
 

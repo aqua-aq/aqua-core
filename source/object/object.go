@@ -218,7 +218,7 @@ func (a Arguments) String() string {
 			sb.WriteString(", ")
 		}
 		sb.WriteString(arg.Name)
-		if arg.Default == nil || !arg.Default.IsNull() {
+		if !arg.Default.Normalize().IsNull() {
 			sb.WriteString("=" + arg.Default.String())
 		}
 	}

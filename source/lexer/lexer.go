@@ -24,17 +24,18 @@ func New(data, path string) (*Lexer, error) {
 	if err != nil {
 		return nil, err
 	}
+	return NewWithPos(data, pos), nil
+}
+
+func NewWithPos(data string, pos pos.Pos) *Lexer {
 	return &Lexer{
 		Pos:  pos,
 		Data: []rune(data),
-	}, nil
+	}
 }
 
 func NewRelative(data string, relative pos.Pos) *Lexer {
-	return &Lexer{
-		Pos:  pos.NewRelative(relative, 1, 0),
-		Data: []rune(data),
-	}
+	return NewWithPos(data, pos.NewRelative(relative, 1, 0))
 }
 
 func (l *Lexer) NextToken() (tokens.Token, error) {
@@ -100,4 +101,10 @@ func (l *Lexer) Tokenize() error {
 		}
 	}
 	return err
+}
+
+func (l *Lexer) Reload(data string, pos pos.Pos) {
+	l.Tokens = nil
+	l.Data = []rune(data)
+	l.Pos = pos
 }

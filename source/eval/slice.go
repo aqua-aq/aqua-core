@@ -8,7 +8,7 @@ import (
 	"github.com/vandi37/aqua/pkg/stacktrace"
 	"github.com/vandi37/aqua/source/errors"
 	"github.com/vandi37/aqua/source/object"
-	"github.com/vandi37/aqua/source/signal"
+	"github.com/vandi37/aqua/source/object/signal"
 )
 
 func ParseSliceIndex(val *object.Value, length int, pos pos.Pos) (int, object.ExpressionResult) {

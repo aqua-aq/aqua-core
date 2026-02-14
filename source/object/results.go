@@ -6,7 +6,7 @@ import (
 	"github.com/vandi37/aqua/pkg/pos"
 	"github.com/vandi37/aqua/pkg/stacktrace"
 	"github.com/vandi37/aqua/source/errors"
-	"github.com/vandi37/aqua/source/signal"
+	"github.com/vandi37/aqua/source/object/signal"
 )
 
 type ExpressionResult struct {

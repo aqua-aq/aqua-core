@@ -5,17 +5,32 @@ import (
 	"path/filepath"
 )
 
+type PosType byte
+
+const (
+	InFilePos PosType = iota
+	InBuiltInPos
+	InConsolePos
+)
+
 type Pos struct {
 	line, column uint
 	path         string
-	buildIn      bool
+	t            PosType
 	relative     *struct{ line, column uint }
 }
 
-func BuildInPos(f string) Pos {
+func BuiltInPos(f string) Pos {
 	return Pos{
-		path:    f,
-		buildIn: true,
+		path: f,
+		t:    InBuiltInPos,
+	}
+}
+func ConsolePos(line, column uint) Pos {
+	return Pos{
+		line:   line,
+		column: column,
+		t:      InConsolePos,
 	}
 }
 func NewRelative(relative Pos, line, column uint) Pos {
@@ -30,7 +45,7 @@ func NewPos(line, column uint, path string) (Pos, error) {
 	if err != nil {
 		return Pos{}, err
 	}
-	return Pos{line, column, absPath, false, nil}, nil
+	return Pos{line, column, absPath, InFilePos, nil}, nil
 }
 func (p Pos) GetLine() uint {
 	return p.line
@@ -72,7 +87,10 @@ func (p Pos) String() string {
 		p.relative = nil
 		return fmt.Sprintf("%s (position in the string: %d:%d)", p.String(), line, column)
 	}
-	if p.buildIn {
+	if p.t == InConsolePos {
+		return fmt.Sprintf("%d:%d", p.line, p.column)
+	}
+	if p.t == InBuiltInPos {
 		return fmt.Sprintf("build-in function %s", p.path)
 	}
 	return fmt.Sprintf("%s:%d:%d", p.path, p.line, p.column)

@@ -10,7 +10,7 @@ import (
 	"github.com/vandi37/aqua/source/errors"
 	"github.com/vandi37/aqua/source/keywords"
 	"github.com/vandi37/aqua/source/object"
-	"github.com/vandi37/aqua/source/signal"
+	"github.com/vandi37/aqua/source/object/signal"
 	"github.com/vandi37/aqua/source/vm"
 )
 

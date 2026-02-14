@@ -7,7 +7,7 @@ import (
 	"github.com/vandi37/aqua/pkg/stacktrace"
 	"github.com/vandi37/aqua/source/errors"
 	"github.com/vandi37/aqua/source/object"
-	"github.com/vandi37/aqua/source/signal"
+	"github.com/vandi37/aqua/source/object/signal"
 )
 
 func GetAttr(value *object.Value, name string, pos pos.Pos) object.ExpressionResult {
