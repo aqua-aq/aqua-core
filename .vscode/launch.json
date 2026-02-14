@@ -9,11 +9,11 @@
             "type": "go",
             "request": "launch",
             "mode": "debug",
-            "program": "cmd/main.go",
+            "program": "aqua.go",
             "env": {
                 "AQUA_PATH":"path"
             },
-            "args": ["exec", "main.aq"],
+            "args": ["exec", "test.aq"],
         }
     ]
 }

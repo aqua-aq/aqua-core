@@ -134,6 +134,9 @@ func (p *Parser) Expression(bp power.BindingPower, isBind bool) (ast.Expression,
 				if bin.IsRight() {
 					power--
 				}
+				if bin == operators.Index {
+					power = 0
+				}
 				right, err := p.Expression(power, bin == operators.Bind)
 				if err != nil {
 					return nil, err
@@ -162,7 +165,7 @@ func (p *Parser) Expression(bp power.BindingPower, isBind bool) (ast.Expression,
 							}
 							continue
 						}
-						end, err := p.Expression(bin.Power(), bin == operators.Bind)
+						end, err := p.Expression(0, bin == operators.Bind)
 						if err != nil {
 							return nil, err
 						}

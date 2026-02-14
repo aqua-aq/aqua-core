@@ -225,10 +225,8 @@ func (o Operator) Power() power.BindingPower {
 		return power.PowerShift
 	case Bind:
 		return power.PowerBind
-	case Dot, Method, QuestionDot, QuestionMethod, Delete, QuestionDelete:
+	case Dot, Method, QuestionDot, QuestionMethod, Delete, QuestionDelete, Index:
 		return power.PowerPostfix
-	case Index:
-		return power.PowerLowest
 	default:
 		return power.PowerLowest
 	}

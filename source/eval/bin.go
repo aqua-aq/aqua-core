@@ -11,8 +11,8 @@ import (
 	"github.com/aqua-aq/aqua-core/pkg/stacktrace"
 	"github.com/aqua-aq/aqua-core/source/errors"
 	"github.com/aqua-aq/aqua-core/source/object"
-	"github.com/aqua-aq/aqua-core/source/operators"
 	"github.com/aqua-aq/aqua-core/source/object/signal"
+	"github.com/aqua-aq/aqua-core/source/operators"
 	"github.com/aqua-aq/aqua-core/source/vm"
 )
 
