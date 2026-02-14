@@ -33,11 +33,10 @@ func (p *Parser) Expression(bp power.BindingPower, isBind bool) (ast.Expression,
 			leftArray := []ast.AssigmentPattern{{Name: name, Expression: left, Pos: peek.Pos}}
 			for peek, _ = p.Peek(0); peek.Type == tokens.TokenComma; peek, _ = p.Peek(0) {
 				p.Move()
-				expr, err := p.Expression(power.PowerLowest, false)
+				expr, err := p.Expression(power.PowerDirectAssignment, false)
 				if err != nil {
 					return nil, err
 				}
-				var name *ast.IdentExpression
 				peek, _ = p.Peek(0)
 				if peek.Type == tokens.TokenColumn {
 					p.Move()
