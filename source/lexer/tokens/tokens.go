@@ -249,7 +249,6 @@ func (t TokenType) String() string {
 		return "<increment>"
 	case TokenDecrement:
 		return "<decrement>"
-
 	case TokenIdentifier:
 		return "<identifier>"
 	case TokenNumber:
