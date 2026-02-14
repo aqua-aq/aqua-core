@@ -23,4 +23,4 @@ func init() {
 }
 
 const LIB_PATH = "libs"
-const VERSION = "aqua v0.1.0-alpha"
+const VERSION = "aqua v0.1.0-beta"
