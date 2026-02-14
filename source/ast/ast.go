@@ -181,11 +181,6 @@ type (
 		End   Expression
 		Pos   pos.Pos
 	}
-	DeleteExpression struct {
-		Ident IdentExpression
-		Value Expression
-		Pos   pos.Pos
-	}
 )
 
 func (ObjectDec) expression()           {}
@@ -212,4 +207,3 @@ func (ModExpression) expression()       {}
 func (ImportExpression) expression()    {}
 func (SwitchExpression) expression()    {}
 func (SliceExpression) expression()     {}
-func (DeleteExpression) expression()    {}

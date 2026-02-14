@@ -40,10 +40,10 @@ func DeleteAttr(value *object.Value, name string, pos pos.Pos) object.Expression
 			Trace: stacktrace.New(pos),
 		}
 	}
-
+	attr := obj.Map[name].Normalize()
 	delete(obj.Map, name)
 
-	return object.ExpressionResult{SignalVal: obj.Map[name].Normalize(), Trace: stacktrace.New(pos)}
+	return object.ExpressionResult{SignalVal: attr, Trace: stacktrace.New(pos)}
 }
 
 func GetAttrMethod(value *object.Value, name string, pos pos.Pos) object.ExpressionResult {

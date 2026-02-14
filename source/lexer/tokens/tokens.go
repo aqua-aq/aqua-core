@@ -40,7 +40,6 @@ const (
 	TokenMod
 	TokenExport
 	TokenImport
-	TokenDelete
 	TokenAs
 	TokenReturn
 	TokenBreak
@@ -85,6 +84,8 @@ const (
 	TokenQuestionDot
 	TokenMethod
 	TokenQuestionMethod
+	TokenDelete
+	TokenQuestionDelete
 	TokenBind
 	TokenComma
 
@@ -149,8 +150,7 @@ func (t TokenType) String() string {
 		return "<import>"
 	case TokenAs:
 		return "<as>"
-	case TokenDelete:
-		return "<delete>"
+
 	case TokenReturn:
 		return "<return>"
 	case TokenBreak:
@@ -229,6 +229,10 @@ func (t TokenType) String() string {
 		return "<question method>"
 	case TokenMethod:
 		return "<method>"
+	case TokenDelete:
+		return "<delete>"
+	case TokenQuestionDelete:
+		return "<question delete"
 	case TokenBind:
 		return "<bind>"
 	case TokenComma:
@@ -339,6 +343,10 @@ func (t TokenType) IntoBin() (operators.Operator, bool) {
 		return operators.Dot, true
 	case TokenMethod:
 		return operators.Method, true
+	case TokenDelete:
+		return operators.Delete, true
+	case TokenQuestionDelete:
+		return operators.QuestionDelete, true
 	case TokenBind:
 		return operators.Bind, true
 	case TokenSquareBracketOpened:

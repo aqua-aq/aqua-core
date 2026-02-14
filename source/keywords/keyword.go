@@ -10,7 +10,6 @@ const (
 	Call    = "__call__"
 	Slice   = "__slice__"
 	Len     = "__length__"
-	Delete  = "__delete__"
 
 	Neg = "__neg__"
 	Not = "__not__"

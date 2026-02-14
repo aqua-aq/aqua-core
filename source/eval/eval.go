@@ -70,8 +70,6 @@ func IntoEval(expr ast.Expression) Eval {
 		return SwitchExpression(val)
 	case ast.SliceExpression:
 		return SliceExpression(val)
-	case ast.DeleteExpression:
-		return DeleteExpression(val)
 	default:
 		return NullDec{}
 	}
@@ -102,23 +100,7 @@ type (
 	ImportExpression    ast.ImportExpression
 	SwitchExpression    ast.SwitchExpression
 	SliceExpression     ast.SliceExpression
-	DeleteExpression    ast.DeleteExpression
 )
-
-func (d DeleteExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
-	value := IntoEval(d.Value).Eval(vm, scope, false)
-	if value.Signal.Has() {
-		return value.Clone(clone)
-	}
-	if AttrExists(value.SignalVal.Normalize(), keywords.Delete) {
-		method := GetAttrMethod(value.SignalVal.Normalize(), keywords.Delete, d.Pos)
-		if method.Signal.Has() {
-			return method
-		}
-		return Call(vm, method.SignalVal, []*object.Value{{InnerValue: object.String{Value: d.Ident.Ident}}}, clone, d.Pos, nil)
-	}
-	return DeleteAttr(value.SignalVal.Normalize(), d.Ident.Ident, d.Pos)
-}
 
 func (s SliceExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
 	left := IntoEval(s.Left).Eval(vm, scope, false)
@@ -385,7 +367,7 @@ func (a AssigmentExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*o
 			}
 			attr := GetAttr(right.SignalVal.Normalize(), name.Ident, v.Pos)
 			if attr.Signal.Has() {
-				return attr
+				return attr.Clone(clone)
 			}
 			*expr.SignalVal.Normalize() = *attr.SignalVal.Normalize()
 		}
@@ -402,7 +384,7 @@ func (a AssigmentExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*o
 
 	}
 
-	return right.Clone(clone)
+	return right
 }
 
 func (i IdentExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
@@ -783,14 +765,17 @@ func (b BinExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.
 		return left.Clone(clone)
 	}
 
-	if b.Operator == operators.Dot || b.Operator == operators.Method || b.Operator == operators.QuestionDot {
+	if b.Operator == operators.Dot || b.Operator == operators.Method || b.Operator == operators.QuestionDot || b.Operator == operators.Delete || b.Operator == operators.QuestionDelete {
 		if right, ok := b.Right.(ast.IdentExpression); ok {
-			if (b.Operator == operators.QuestionDot || b.Operator == operators.QuestionMethod) &&
+			if (b.Operator == operators.QuestionDot || b.Operator == operators.QuestionMethod || b.Operator == operators.QuestionDelete) &&
 				left.SignalVal.Normalize().IsNull() {
 				return left
 			}
 			if b.Operator == operators.Dot || b.Operator == operators.QuestionDot {
 				return GetAttr(left.SignalVal.Normalize(), right.Ident, b.Pos).Clone(clone)
+			}
+			if b.Operator == operators.Delete || b.Operator == operators.QuestionDelete {
+				return DeleteAttr(left.SignalVal.Normalize(), right.Ident, b.Pos).Clone(clone)
 			}
 			return GetAttrMethod(left.SignalVal.Normalize(), right.Ident, b.Pos).Clone(clone)
 		}

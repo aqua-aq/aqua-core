@@ -33,6 +33,7 @@ func (l *Lexer) InitDoubleChar() {
 	l.DoubleChar[[2]rune{'<', '='}] = tokens.TokenLe
 	l.DoubleChar[[2]rune{'.', '>'}] = tokens.TokenMethod
 	l.DoubleChar[[2]rune{'-', '>'}] = tokens.TokenBind
+	l.DoubleChar[[2]rune{'.', '~'}] = tokens.TokenDelete
 	l.DoubleChar[[2]rune{'+', '+'}] = tokens.TokenIncrement
 	l.DoubleChar[[2]rune{'-', '-'}] = tokens.TokenDecrement
 	l.DoubleChar[[2]rune{'?', '.'}] = tokens.TokenQuestionDot
@@ -41,7 +42,8 @@ func (l *Lexer) InitDoubleChar() {
 
 func (l *Lexer) InitTripleChar() {
 	l.TripleChar[[3]rune{'.', '.', '.'}] = tokens.TokenDots
-	l.TripleChar[[3]rune{'?', '.', '?'}] = tokens.TokenQuestionMethod
+	l.TripleChar[[3]rune{'?', '.', '>'}] = tokens.TokenQuestionMethod
+	l.TripleChar[[3]rune{'?', '.', '~'}] = tokens.TokenQuestionDelete
 }
 
 func (l *Lexer) InitKeywords() {
@@ -66,7 +68,6 @@ func (l *Lexer) InitKeywords() {
 	l.KeyWords["export"] = tokens.TokenExport
 	l.KeyWords["import"] = tokens.TokenImport
 	l.KeyWords["as"] = tokens.TokenAs
-	l.KeyWords["delete"] = tokens.TokenDelete
 	l.KeyWords["return"] = tokens.TokenReturn
 	l.KeyWords["break"] = tokens.TokenBreak
 	l.KeyWords["continue"] = tokens.TokenContinue

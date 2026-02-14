@@ -48,8 +48,6 @@ func (p *Parser) PrimaryExpression() (ast.Expression, error) {
 		return p.ParseModule()
 	case tokens.TokenImport:
 		return p.ParseImportExpression()
-	case tokens.TokenDelete:
-		return p.ParseDeleteExpression()
 	case tokens.TokenReturn:
 		return p.ParseSignalExpression(signal.SignalReturn)
 	case tokens.TokenBreak:

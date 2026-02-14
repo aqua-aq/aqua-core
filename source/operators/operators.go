@@ -38,6 +38,8 @@ const (
 	QuestionDot
 	Method
 	QuestionMethod
+	Delete
+	QuestionDelete
 )
 
 func (o Operator) String() string {
@@ -90,6 +92,10 @@ func (o Operator) String() string {
 		return ".>"
 	case QuestionMethod:
 		return "?.>"
+	case Delete:
+		return ".~"
+	case QuestionDelete:
+		return "?.~"
 	case Bind:
 		return "->"
 	default:
@@ -219,7 +225,7 @@ func (o Operator) Power() power.BindingPower {
 		return power.PowerShift
 	case Bind:
 		return power.PowerBind
-	case Dot, Method, QuestionDot, QuestionMethod:
+	case Dot, Method, QuestionDot, QuestionMethod, Delete, QuestionDelete:
 		return power.PowerPostfix
 	case Index:
 		return power.PowerLowest
