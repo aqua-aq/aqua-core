@@ -41,6 +41,7 @@ func (l *Lexer) InitDoubleChar() {
 
 func (l *Lexer) InitTripleChar() {
 	l.TripleChar[[3]rune{'.', '.', '.'}] = tokens.TokenDots
+	l.TripleChar[[3]rune{'?', '.', '?'}] = tokens.TokenQuestionMethod
 }
 
 func (l *Lexer) InitKeywords() {
