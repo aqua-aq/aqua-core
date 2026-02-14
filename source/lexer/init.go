@@ -65,6 +65,7 @@ func (l *Lexer) InitKeywords() {
 	l.KeyWords["export"] = tokens.TokenExport
 	l.KeyWords["import"] = tokens.TokenImport
 	l.KeyWords["as"] = tokens.TokenAs
+	l.KeyWords["delete"] = tokens.TokenDelete
 	l.KeyWords["return"] = tokens.TokenReturn
 	l.KeyWords["break"] = tokens.TokenBreak
 	l.KeyWords["continue"] = tokens.TokenContinue

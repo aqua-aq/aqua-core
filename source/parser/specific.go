@@ -137,3 +137,25 @@ func (p *Parser) ParseObjectDeclaration() (ast.ObjectDec, error) {
 		Vals: vals,
 	}, nil
 }
+func (p *Parser) ParseDeleteExpression() (ast.DeleteExpression, error) {
+	pos := p.pos
+
+	ident, err := p.Expect(tokens.TokenIdentifier)
+	if err != nil {
+		return ast.DeleteExpression{}, err
+	}
+
+	expression, err := p.Expression(power.PowerLowest, false)
+	if err != nil {
+		return ast.DeleteExpression{}, err
+	}
+
+	return ast.DeleteExpression{
+		Ident: ast.IdentExpression{
+			Ident: ident.Value,
+			Pos:   ident.Pos,
+		},
+		Value: expression,
+		Pos:   pos,
+	}, nil
+}

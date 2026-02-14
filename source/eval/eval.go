@@ -11,8 +11,8 @@ import (
 	"github.com/aqua-aq/aqua-core/source/eval/importing"
 	"github.com/aqua-aq/aqua-core/source/keywords"
 	"github.com/aqua-aq/aqua-core/source/object"
-	"github.com/aqua-aq/aqua-core/source/operators"
 	"github.com/aqua-aq/aqua-core/source/object/signal"
+	"github.com/aqua-aq/aqua-core/source/operators"
 	"github.com/aqua-aq/aqua-core/source/vm"
 )
 
@@ -70,6 +70,8 @@ func IntoEval(expr ast.Expression) Eval {
 		return SwitchExpression(val)
 	case ast.SliceExpression:
 		return SliceExpression(val)
+	case ast.DeleteExpression:
+		return DeleteExpression(val)
 	default:
 		return NullDec{}
 	}
@@ -100,7 +102,23 @@ type (
 	ImportExpression    ast.ImportExpression
 	SwitchExpression    ast.SwitchExpression
 	SliceExpression     ast.SliceExpression
+	DeleteExpression    ast.DeleteExpression
 )
+
+func (d DeleteExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
+	value := IntoEval(d.Value).Eval(vm, scope, false)
+	if value.Signal.Has() {
+		return value.Clone(clone)
+	}
+	if AttrExists(value.SignalVal.Normalize(), keywords.Delete) {
+		method := GetAttrMethod(value.SignalVal.Normalize(), keywords.Delete, d.Pos)
+		if method.Signal.Has() {
+			return method
+		}
+		return Call(vm, method.SignalVal, []*object.Value{{InnerValue: object.String{Value: d.Ident.Ident}}}, clone, d.Pos, nil)
+	}
+	return DeleteAttr(value.SignalVal.Normalize(), d.Ident.Ident, d.Pos)
+}
 
 func (s SliceExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
 	left := IntoEval(s.Left).Eval(vm, scope, false)

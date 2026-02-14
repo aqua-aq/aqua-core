@@ -163,7 +163,6 @@ func Exec(vals []string, _ map[string]string, _ map[string]struct{}, args []stri
 	if err != nil {
 		return err
 	}
-
 	_, err = run.Run(path, "main", vm)
 	if err != nil {
 		return err

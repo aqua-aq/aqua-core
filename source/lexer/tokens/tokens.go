@@ -40,6 +40,7 @@ const (
 	TokenMod
 	TokenExport
 	TokenImport
+	TokenDelete
 	TokenAs
 	TokenReturn
 	TokenBreak
@@ -148,6 +149,8 @@ func (t TokenType) String() string {
 		return "<import>"
 	case TokenAs:
 		return "<as>"
+	case TokenDelete:
+		return "<delete>"
 	case TokenReturn:
 		return "<return>"
 	case TokenBreak:

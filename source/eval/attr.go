@@ -29,6 +29,23 @@ func GetAttr(value *object.Value, name string, pos pos.Pos) object.ExpressionRes
 	return object.ExpressionResult{SignalVal: obj.Map[name].Normalize(), Trace: stacktrace.New(pos)}
 }
 
+func DeleteAttr(value *object.Value, name string, pos pos.Pos) object.ExpressionResult {
+	obj, ok := value.Normalize().InnerValue.(object.Object)
+	if !ok {
+		return object.ExpressionResult{Signal: signal.SignalRaise, SignalVal: &object.Value{
+			InnerValue: object.Error{
+				Code:    errors.TypeError,
+				Message: fmt.Sprintf("expected an object, got %v", value.Type()),
+			}},
+			Trace: stacktrace.New(pos),
+		}
+	}
+
+	delete(obj.Map, name)
+
+	return object.ExpressionResult{SignalVal: obj.Map[name].Normalize(), Trace: stacktrace.New(pos)}
+}
+
 func GetAttrMethod(value *object.Value, name string, pos pos.Pos) object.ExpressionResult {
 	attr := GetAttr(value, name, pos)
 	if attr.Signal.Has() {
