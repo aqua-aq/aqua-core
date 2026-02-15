@@ -956,7 +956,7 @@ func (n NullDec) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value]
 }
 
 func (a ArrayDec) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
-	var arr []*object.Value
+	arr := make([]*object.Value, 0, len(a.Elements))
 	for _, val := range a.Elements {
 		if val.IsContinuos {
 			res := IntoEval(val.Value).Eval(vm, scope, true)
