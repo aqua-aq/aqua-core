@@ -856,15 +856,15 @@ func (s SubroutineDec) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.
 	if s.Name != nil {
 		name = s.Name.Ident
 	}
+	sub := DeclareSubroutine(vm, scope, clone, name, ast.SubroutineDec(s))
 	if s.Name != nil && s.IsGlobal {
-		sub := DeclareSubroutine(vm, scope, clone, s.Name.Ident, ast.SubroutineDec(s))
 		if sub.Signal.Has() {
 			return sub.Clone(clone)
 		}
 		scope.Set(s.Name.Ident, sub.SignalVal.Normalize())
 		return object.ExpressionResult{Trace: stacktrace.New(s.Pos)}
 	}
-	return DeclareSubroutine(vm, scope, clone, name, ast.SubroutineDec(s))
+	return sub
 }
 
 func (n NumDec) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
