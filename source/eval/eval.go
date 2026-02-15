@@ -410,11 +410,12 @@ func (c CallExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object
 	}
 	args := make([]*object.Value, 0, len(c.Args))
 	for _, val := range c.Args {
+		res := IntoEval(val.Value).Eval(vm, scope, true)
+		if res.Signal.Has() {
+			return res.Clone(clone)
+		}
 		if val.IsContinuos {
-			res := IntoEval(val.Value).Eval(vm, scope, true)
-			if res.Signal.Has() {
-				return res.Clone(clone)
-			}
+
 			inner, ok := res.SignalVal.InnerValue.(object.Array)
 			if !ok {
 				return object.ExpressionResult{Trace: stacktrace.New(val.Pos),
@@ -426,12 +427,9 @@ func (c CallExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object
 				}
 			}
 			args = append(args, inner.Elements...)
+		} else {
+			args = append(args, res.SignalVal.Normalize())
 		}
-		res := IntoEval(val.Value).Eval(vm, scope, true)
-		if res.Signal.Has() {
-			return res.Clone(clone)
-		}
-		args = append(args, res.SignalVal.Normalize())
 	}
 	return Call(vm, sub.SignalVal, args, clone, c.Pos, nil)
 }
@@ -839,7 +837,6 @@ func (o ObjectDec) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Valu
 			for k, v := range inner.Map {
 				obj[k] = v
 			}
-			continue
 		} else {
 			obj[val.Name.Ident] = res.SignalVal.Normalize()
 		}

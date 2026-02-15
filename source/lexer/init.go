@@ -83,6 +83,7 @@ func (l *Lexer) InitKeywords() {
 	l.KeyWords["true"] = tokens.TokenTrue
 	l.KeyWords["false"] = tokens.TokenFalse
 	l.KeyWords["null"] = tokens.TokenNull
+	l.KeyWords["_"] = tokens.TokenNull
 	l.KeyWords["infinity"] = tokens.TokenInfinity
 	l.KeyWords["nan"] = tokens.TokenNan
 }
