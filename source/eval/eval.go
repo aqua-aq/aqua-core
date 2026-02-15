@@ -840,8 +840,10 @@ func (o ObjectDec) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Valu
 				obj[k] = v
 			}
 			continue
+		} else {
+			obj[val.Name.Ident] = res.SignalVal.Normalize()
+
 		}
-		obj[val.Name.Ident] = res.SignalVal.Normalize()
 
 	}
 	return object.ExpressionResult{Trace: stacktrace.New(o.Pos),
