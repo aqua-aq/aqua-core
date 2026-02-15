@@ -57,7 +57,6 @@ func Run(path, name string, vm *vm.VM[*object.Value]) (map[string]*object.Value,
 	}
 	scope := scope.New[*object.Value]()
 	global.GenerateBuildIn(scope)
-
 	sub := eval.DeclareSubroutine(vm, scope, false, fmt.Sprintf("<%s>", name), ast.SubroutineDec{
 		Arguments: ast.Arguments{},
 		Body:      block,
