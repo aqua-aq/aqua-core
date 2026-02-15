@@ -3,13 +3,14 @@ package global
 import (
 	"bufio"
 	"fmt"
+	"math"
 	"os"
 	"strings"
 
+	"github.com/aqua-aq/aqua-core/pkg/errors"
 	"github.com/aqua-aq/aqua-core/pkg/pos"
 	"github.com/aqua-aq/aqua-core/pkg/scope"
 	"github.com/aqua-aq/aqua-core/pkg/stacktrace"
-	"github.com/aqua-aq/aqua-core/pkg/errors"
 	"github.com/aqua-aq/aqua-core/source/eval"
 	"github.com/aqua-aq/aqua-core/source/keywords"
 	"github.com/aqua-aq/aqua-core/source/object"
@@ -274,6 +275,12 @@ func Error(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value]) object.Su
 	intCode, err := eval.IntoInt(vm, c.Normalize(), pos.BuiltInPos("error"))
 	if sErr := err.IntoSubroutineResultStrict(pos.BuiltInPos("error")); err.Signal.Has() {
 		return sErr
+	}
+	if intCode < 0 && intCode > math.MaxUint16 {
+		return Raise("error", object.Error{
+			Code:    errors.ValueError,
+			Message: fmt.Sprintf("code should be in range of [%d; %d]", 0, math.MaxUint16),
+		})
 	}
 	m, ok := scope.Get(message)
 	if !ok {
