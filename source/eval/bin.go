@@ -6,10 +6,10 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/aqua-aq/aqua-core/pkg/errors"
 	"github.com/aqua-aq/aqua-core/pkg/pos"
 	"github.com/aqua-aq/aqua-core/pkg/scope"
 	"github.com/aqua-aq/aqua-core/pkg/stacktrace"
-	"github.com/aqua-aq/aqua-core/pkg/errors"
 	"github.com/aqua-aq/aqua-core/source/object"
 	"github.com/aqua-aq/aqua-core/source/object/signal"
 	"github.com/aqua-aq/aqua-core/source/operators"
@@ -88,18 +88,6 @@ func RunBin(
 			return expr.Clone(clone)
 		}
 		return Call(vm, expr.SignalVal, []*object.Value{right.Normalize()}, clone, pos, nil).Clone(clone)
-	}
-	if operator == operators.Question {
-		if left.IsNull() {
-			return object.ExpressionResult{
-				SignalVal: right,
-				Trace:     stacktrace.New(pos),
-			}.Clone(clone)
-		}
-		return object.ExpressionResult{
-			SignalVal: left,
-			Trace:     stacktrace.New(pos),
-		}.Clone(clone)
 	}
 	if operator == operators.Equal {
 		return object.ExpressionResult{

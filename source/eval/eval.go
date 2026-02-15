@@ -795,6 +795,22 @@ func (b BinExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.
 		}
 
 	}
+	if b.Operator == operators.Question {
+		if left.SignalVal.Normalize().IsNull() {
+			right := IntoEval(b.Right).Eval(vm, scope, false)
+			if right.Signal.Has() {
+				return right.Clone(clone)
+			}
+			return object.ExpressionResult{
+				SignalVal: right.SignalVal.Normalize(),
+				Trace:     stacktrace.New(b.Pos),
+			}.Clone(clone)
+		}
+		return object.ExpressionResult{
+			SignalVal: left.SignalVal.Normalize(),
+			Trace:     stacktrace.New(b.Pos),
+		}.Clone(clone)
+	}
 	right := IntoEval(b.Right).Eval(vm, scope, false)
 	if right.Signal.Has() {
 		return right.Clone(clone)
