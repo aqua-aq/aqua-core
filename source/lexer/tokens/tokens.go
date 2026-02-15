@@ -77,8 +77,9 @@ const (
 	TokenQuestion
 
 	TokenAssign
-	TokenDots // ...
-	TokenPtr
+	TokenDots  // ...
+	TokenPtr   // &
+	TokenClone // $
 	TokenColumn
 	TokenDot
 	TokenQuestionDot
@@ -219,6 +220,8 @@ func (t TokenType) String() string {
 		return "<question>"
 	case TokenPtr:
 		return "<ptr>"
+	case TokenClone:
+		return "<clone>"
 	case TokenColumn:
 		return "<column>"
 	case TokenDot:
@@ -290,6 +293,8 @@ func (t TokenType) IntoPrefix() (operators.PrefixOperator, bool) {
 		return operators.Neg, true
 	case TokenPtr:
 		return operators.Ptr, true
+	case TokenClone:
+		return operators.Clone, true
 	default:
 		return 0, false
 	}

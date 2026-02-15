@@ -12,6 +12,7 @@ func (l *Lexer) InitOneChar() {
 	l.OneChar['<'] = tokens.TokenLt
 	l.OneChar['='] = tokens.TokenAssign
 	l.OneChar['&'] = tokens.TokenPtr
+	l.OneChar['$'] = tokens.TokenClone
 	l.OneChar[':'] = tokens.TokenColumn
 	l.OneChar['.'] = tokens.TokenDot
 	l.OneChar[','] = tokens.TokenComma

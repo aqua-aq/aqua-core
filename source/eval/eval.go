@@ -676,7 +676,10 @@ func (p PrefixExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*obje
 		},
 	}
 	if p.Operator == operators.Ptr {
-		return expr // No clone
+		return object.ExpressionResult{Trace: stacktrace.New(p.Pos), SignalVal: expr.SignalVal.Normalize()}
+	}
+	if p.Operator == operators.Clone {
+		return object.ExpressionResult{Trace: stacktrace.New(p.Pos), SignalVal: expr.SignalVal.Normalize().Clone()}
 	}
 	if p.Operator == operators.Typeof {
 		return object.ExpressionResult{Trace: stacktrace.New(p.Pos),

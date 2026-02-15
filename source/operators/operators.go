@@ -163,6 +163,7 @@ type PrefixOperator byte
 
 const (
 	Ptr PrefixOperator = iota
+	Clone
 	Neg
 	Not
 	Inc
@@ -174,6 +175,8 @@ func (o PrefixOperator) String() string {
 	switch o {
 	case Ptr:
 		return "&"
+	case Clone:
+		return "$"
 	case Neg:
 		return "-"
 	case Not:
