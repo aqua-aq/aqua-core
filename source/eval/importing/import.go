@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/aqua-aq/aqua-core/env"
-	"github.com/aqua-aq/aqua-core/source/errors"
+	"github.com/aqua-aq/aqua-core/pkg/errors"
 	"github.com/aqua-aq/aqua-core/source/object"
 	"github.com/aqua-aq/aqua-core/source/vm"
 )

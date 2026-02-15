@@ -7,7 +7,7 @@ type Error struct {
 	Message string
 }
 
-type Code int
+type Code uint16
 
 const (
 	UnknownError Code = iota

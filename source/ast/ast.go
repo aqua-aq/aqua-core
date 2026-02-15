@@ -1,8 +1,8 @@
 package ast
 
 import (
+	"github.com/aqua-aq/aqua-core/pkg/errors"
 	"github.com/aqua-aq/aqua-core/pkg/pos"
-	"github.com/aqua-aq/aqua-core/source/errors"
 	"github.com/aqua-aq/aqua-core/source/object/signal"
 	"github.com/aqua-aq/aqua-core/source/operators"
 )

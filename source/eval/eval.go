@@ -7,7 +7,7 @@ import (
 	"github.com/aqua-aq/aqua-core/pkg/scope"
 	"github.com/aqua-aq/aqua-core/pkg/stacktrace"
 	"github.com/aqua-aq/aqua-core/source/ast"
-	"github.com/aqua-aq/aqua-core/source/errors"
+	"github.com/aqua-aq/aqua-core/pkg/errors"
 	"github.com/aqua-aq/aqua-core/source/eval/importing"
 	"github.com/aqua-aq/aqua-core/source/keywords"
 	"github.com/aqua-aq/aqua-core/source/object"
