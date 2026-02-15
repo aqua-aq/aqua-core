@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/aqua-aq/aqua-core/pkg/errors"
 	"github.com/aqua-aq/aqua-core/pkg/scope"
 	"github.com/aqua-aq/aqua-core/pkg/stacktrace"
 	"github.com/aqua-aq/aqua-core/source/ast"
-	"github.com/aqua-aq/aqua-core/pkg/errors"
 	"github.com/aqua-aq/aqua-core/source/eval/importing"
 	"github.com/aqua-aq/aqua-core/source/keywords"
 	"github.com/aqua-aq/aqua-core/source/object"
@@ -487,7 +487,7 @@ block:
 		goto start
 	case expr.Signal == signal.SignalBreak:
 		result = expr.SignalVal.Normalize()
-		goto after
+		goto after_break
 	case expr.Signal.Has():
 		return expr
 	default:
@@ -500,6 +500,7 @@ after:
 	if w.Else != nil && result.Normalize().IsNull() {
 		return BlockExpression(*w.Else).Eval(vm, scope, clone)
 	}
+after_break:
 	return object.ExpressionResult{Trace: stacktrace.New(w.Pos), SignalVal: result.Normalize()}.Clone(clone)
 }
 
@@ -548,7 +549,7 @@ func (f ForExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.
 				result = expr.SignalVal.Normalize()
 			case expr.Signal == signal.SignalBreak:
 				result = expr.SignalVal.Normalize()
-				goto after
+				goto after_break
 			case expr.Signal.Has():
 				return expr.Clone(clone)
 			default:
@@ -564,7 +565,7 @@ func (f ForExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.
 				result = expr.SignalVal.Normalize()
 			case expr.Signal == signal.SignalBreak:
 				result = expr.SignalVal.Normalize()
-				goto after
+				goto after_break
 			case expr.Signal.Has():
 				return expr.Clone(clone)
 			default:
@@ -593,7 +594,7 @@ func (f ForExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.
 				result = expr.SignalVal.Normalize()
 			case expr.Signal == signal.SignalBreak:
 				result = expr.SignalVal.Normalize()
-				goto after
+				goto after_break
 			case expr.Signal.Has():
 				return expr.Clone(clone)
 			default:
@@ -609,7 +610,7 @@ func (f ForExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.
 				result = expr.SignalVal.Normalize()
 			case expr.Signal == signal.SignalBreak:
 				result = expr.SignalVal.Normalize()
-				goto after
+				goto after_break
 			case expr.Signal.Has():
 				return expr.Clone(clone)
 			default:
@@ -627,9 +628,10 @@ func (f ForExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.
 	}
 	goto after
 after:
-	if f.Else != nil && result.Normalize().IsNull() {
+	if f.Else != nil {
 		return BlockExpression(*f.Else).Eval(vm, scope, clone)
 	}
+after_break:
 	return object.ExpressionResult{Trace: stacktrace.New(f.Pos), SignalVal: result.Normalize()}.Clone(clone)
 }
 
