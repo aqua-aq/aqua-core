@@ -842,7 +842,6 @@ func (o ObjectDec) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Valu
 			continue
 		} else {
 			obj[val.Name.Ident] = res.SignalVal.Normalize()
-
 		}
 
 	}
@@ -960,11 +959,11 @@ func (n NullDec) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value]
 func (a ArrayDec) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool) object.ExpressionResult {
 	arr := make([]*object.Value, 0, len(a.Elements))
 	for _, val := range a.Elements {
+		res := IntoEval(val.Value).Eval(vm, scope, true)
+		if res.Signal.Has() {
+			return res.Clone(clone)
+		}
 		if val.IsContinuos {
-			res := IntoEval(val.Value).Eval(vm, scope, true)
-			if res.Signal.Has() {
-				return res.Clone(clone)
-			}
 			inner, ok := res.SignalVal.InnerValue.(object.Array)
 			if !ok {
 				return object.ExpressionResult{Trace: stacktrace.New(val.Pos),
@@ -976,12 +975,10 @@ func (a ArrayDec) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value
 				}
 			}
 			arr = append(arr, inner.Elements...)
+		} else {
+			arr = append(arr, res.SignalVal.Normalize())
 		}
-		res := IntoEval(val.Value).Eval(vm, scope, true)
-		if res.Signal.Has() {
-			return res.Clone(clone)
-		}
-		arr = append(arr, res.SignalVal.Normalize())
+
 	}
 	return object.ExpressionResult{Trace: stacktrace.New(a.Pos),
 		SignalVal: &object.Value{InnerValue: object.Array{Elements: arr}},
