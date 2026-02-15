@@ -5,9 +5,9 @@ import (
 	"math"
 	"strconv"
 
+	"github.com/aqua-aq/aqua-core/pkg/errors"
 	"github.com/aqua-aq/aqua-core/pkg/pos"
 	"github.com/aqua-aq/aqua-core/pkg/stacktrace"
-	"github.com/aqua-aq/aqua-core/pkg/errors"
 	"github.com/aqua-aq/aqua-core/source/keywords"
 	"github.com/aqua-aq/aqua-core/source/object"
 	"github.com/aqua-aq/aqua-core/source/object/signal"
@@ -40,13 +40,8 @@ func IntoBool(vm *vm.VM[*object.Value], val *object.Value, pos pos.Pos) (bool, o
 		}
 		return IntoBool(vm, res.SignalVal.Normalize(), pos)
 	}
-	return false, object.ExpressionResult{
-		Trace:  stacktrace.New(pos),
-		Signal: signal.SignalRaise,
-		SignalVal: &object.Value{InnerValue: object.Error{
-			Code:    errors.TypeError,
-			Message: fmt.Sprintf("can't convert value with type %s to boolean", val.Normalize().Type()),
-		}},
+	return true, object.ExpressionResult{
+		Trace: stacktrace.New(pos),
 	}
 }
 

@@ -195,13 +195,7 @@ func RunBin(
 			if r, ok := right.Normalize().InnerValue.(object.Number); ok && math.Floor(r.Value) == r.Value {
 				rInt := int(r.Value)
 				if r.Value < 0 || rInt >= len(l.Elements) {
-					return object.ExpressionResult{Trace: stacktrace.New(pos),
-						Signal: signal.SignalRaise,
-						SignalVal: &object.Value{InnerValue: object.Error{
-							Code:    errors.ValueError,
-							Message: fmt.Sprintf("index %d is out of range, expected [0; %d)", rInt, len(l.Elements)),
-						}},
-					}
+					return object.ExpressionResult{Trace: stacktrace.New(pos)}
 				}
 				return object.ExpressionResult{Trace: stacktrace.New(pos), SignalVal: l.Elements[rInt]}.Clone(clone)
 			}
@@ -219,13 +213,7 @@ func RunBin(
 			if r, ok := right.Normalize().InnerValue.(object.Number); ok && math.Floor(r.Value) == r.Value {
 				rInt := int(r.Value)
 				if r.Value < 0 || rInt >= len(runes) {
-					return object.ExpressionResult{Trace: stacktrace.New(pos),
-						Signal: signal.SignalRaise,
-						SignalVal: &object.Value{InnerValue: object.Error{
-							Code:    errors.ValueError,
-							Message: fmt.Sprintf("index %d is out of range, expected [0; %d)", rInt, len(runes)),
-						}},
-					}
+					return object.ExpressionResult{Trace: stacktrace.New(pos)}
 				}
 				return object.ExpressionResult{Trace: stacktrace.New(pos), SignalVal: &object.Value{InnerValue: object.String{Value: string(runes[rInt])}}}.Clone(clone)
 			}

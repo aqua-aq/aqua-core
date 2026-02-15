@@ -129,14 +129,14 @@ func (p *Parser) Expression(bp power.BindingPower, isBind bool) (ast.Expression,
 						continue
 					}
 				}
-				power := bin.Power()
+				po := bin.Power()
 				if bin.IsRight() {
-					power--
+					po--
 				}
 				if bin == operators.Index {
-					power = 0
+					po = power.PowerPatternAssigment
 				}
-				right, err := p.Expression(power, bin == operators.Bind)
+				right, err := p.Expression(po, bin == operators.Bind)
 				if err != nil {
 					return nil, err
 				}
@@ -164,7 +164,7 @@ func (p *Parser) Expression(bp power.BindingPower, isBind bool) (ast.Expression,
 							}
 							continue
 						}
-						end, err := p.Expression(0, bin == operators.Bind)
+						end, err := p.Expression(power.PowerPatternAssigment, bin == operators.Bind)
 						if err != nil {
 							return nil, err
 						}

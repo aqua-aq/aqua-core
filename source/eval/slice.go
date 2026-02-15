@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/aqua-aq/aqua-core/pkg/errors"
 	"github.com/aqua-aq/aqua-core/pkg/pos"
 	"github.com/aqua-aq/aqua-core/pkg/stacktrace"
-	"github.com/aqua-aq/aqua-core/pkg/errors"
 	"github.com/aqua-aq/aqua-core/source/object"
 	"github.com/aqua-aq/aqua-core/source/object/signal"
 )
@@ -24,15 +24,14 @@ func ParseSliceIndex(val *object.Value, length int, pos pos.Pos) (int, object.Ex
 		}
 	}
 	idx := int(num.Value)
-	if idx < 0 || idx > length {
-		return 0, object.ExpressionResult{
-			Trace:  stacktrace.New(pos),
-			Signal: signal.SignalRaise,
-			SignalVal: &object.Value{InnerValue: object.Error{
-				Code:    errors.ValueError,
-				Message: fmt.Sprintf("index %d is out of range, expected [0; %d]", idx, length),
-			}},
-		}
+	if idx > length {
+		idx = length
+	}
+	if -idx > length {
+		idx = 0
+	}
+	if idx < 0 {
+		idx = length + idx
 	}
 	return idx, object.ExpressionResult{Trace: stacktrace.New(pos)}
 }

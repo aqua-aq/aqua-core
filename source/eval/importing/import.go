@@ -33,7 +33,7 @@ func ParseImport(current string, s string, vm *vm.VM[*object.Value]) (string, st
 		s += "." + env.FILE_EXTENSION
 	}
 
-	if first, second, _ := strings.Cut(s, ":"); second != "" {
+	if first, second, ok := strings.Cut(s, ":"); ok {
 		if dep, ok := vm.Config.Dependencies[first]; ok {
 			return dep, filepath.Join(dep, second), TypeDependence, nil
 		}
@@ -59,7 +59,7 @@ func GetImport(current string, s string, virtualMachine *vm.VM[*object.Value]) (
 	switch t {
 	case TypeStd:
 		vals, err := virtualMachine.StdLib[full]()
-		return full, vals, err
+		return strings.TrimSuffix(filepath.Base(full), filepath.Ext(full)), vals, err
 	case TypeDependenceMain, TypeDependence:
 		depVm, ok := (*virtualMachine.LibVms)[dep]
 		if !ok {

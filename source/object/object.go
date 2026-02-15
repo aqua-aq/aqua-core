@@ -7,9 +7,9 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/aqua-aq/aqua-core/pkg/errors"
 	"github.com/aqua-aq/aqua-core/pkg/scope"
 	"github.com/aqua-aq/aqua-core/source/ast"
-	"github.com/aqua-aq/aqua-core/pkg/errors"
 	"github.com/aqua-aq/aqua-core/source/vm"
 )
 
@@ -130,6 +130,9 @@ func (s *Subroutine) Equals(value *Value) bool {
 	if sub, ok := value.Normalize().InnerValue.(*Subroutine); ok {
 		return s == sub
 	}
+	if method, ok := value.Normalize().InnerValue.(Method); ok {
+		return s == method.Subroutine
+	}
 	return false
 }
 func (Method) value() {}
@@ -139,6 +142,9 @@ func (m Method) Clone() *Value {
 func (Method) Type() Type       { return TypeSubroutine }
 func (m Method) String() string { return m.Subroutine.String() }
 func (m Method) Equals(value *Value) bool {
+	if sub, ok := value.Normalize().InnerValue.(*Subroutine); ok {
+		return m.Subroutine == sub
+	}
 	if method, ok := value.Normalize().InnerValue.(Method); ok {
 		return m.Subroutine == method.Subroutine
 	}

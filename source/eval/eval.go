@@ -155,13 +155,46 @@ func (s SliceExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*objec
 				end = idx
 			}
 		}
+		if end < start {
+			end = start
+		}
 		return object.ExpressionResult{Trace: stacktrace.New(s.Pos), SignalVal: &object.Value{InnerValue: object.Array{Elements: arr.Elements[start:end]}}}
+	} else if str, ok := left.SignalVal.Normalize().InnerValue.(object.String); ok {
+		start := 0
+		runes := []rune(str.Value)
+		end := len(runes)
+		if s.Start != nil {
+			res := IntoEval(s.Start).Eval(vm, scope, false)
+			if res.Signal.Has() {
+				return res.Clone(clone)
+			}
+			if idx, err := ParseSliceIndex(res.SignalVal, len(runes), s.Pos); err.Signal.Has() {
+				return err
+			} else {
+				start = idx
+			}
+		}
+		if s.End != nil {
+			res := IntoEval(s.End).Eval(vm, scope, false)
+			if res.Signal.Has() {
+				return res.Clone(clone)
+			}
+			if idx, err := ParseSliceIndex(res.SignalVal, len(runes), s.Pos); err.Signal.Has() {
+				return err
+			} else {
+				end = idx
+			}
+		}
+		if end < start {
+			end = start
+		}
+		return object.ExpressionResult{Trace: stacktrace.New(s.Pos), SignalVal: &object.Value{InnerValue: object.String{Value: string(runes[start:end])}}}
 	}
 	return object.ExpressionResult{Trace: stacktrace.New(s.Pos),
 		Signal: signal.SignalRaise,
 		SignalVal: &object.Value{InnerValue: object.Error{
 			Code:    errors.TypeError,
-			Message: fmt.Sprintf("expected method '%s' or type %s, got %s", keywords.Slice, object.TypeArray, left.SignalVal.Type()),
+			Message: fmt.Sprintf("expected sliceable, got %s", left.SignalVal.Type()),
 		}},
 	}
 }
@@ -333,16 +366,10 @@ func (a AssigmentExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*o
 			if expr.Signal.Has() {
 				return expr.Clone(clone)
 			}
-			if len(arr.Elements) <= i {
-				return object.ExpressionResult{Trace: stacktrace.New(a.Pos),
-					Signal: signal.SignalRaise,
-					SignalVal: &object.Value{InnerValue: object.Error{
-						Code:    errors.ValueError,
-						Message: fmt.Sprintf("expected at least %d elements, has %d", i+1, len(arr.Elements)),
-					}},
-				}
+			if len(arr.Elements) > i {
+				*expr.SignalVal.Normalize() = *arr.Elements[i]
+
 			}
-			*expr.SignalVal.Normalize() = *arr.Elements[i]
 		}
 	} else if _, ok := right.SignalVal.Normalize().InnerValue.(object.Object); ok {
 		for _, v := range a.Left {
@@ -429,6 +456,7 @@ func (c CallExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object
 			args = append(args, inner.Elements...)
 		} else {
 			args = append(args, res.SignalVal.Normalize())
+
 		}
 	}
 	return Call(vm, sub.SignalVal, args, clone, c.Pos, nil)
@@ -717,15 +745,7 @@ func (p PrefixExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*obje
 	case object.Array:
 		if p.Operator == operators.Dec {
 			if len(val.Elements) == 0 {
-				return object.ExpressionResult{Trace: stacktrace.New(p.Pos),
-					Signal: signal.SignalRaise,
-					SignalVal: &object.Value{
-						InnerValue: object.Error{
-							Code:    errors.ValueError,
-							Message: "array is empty",
-						},
-					},
-				}
+				return object.ExpressionResult{Trace: stacktrace.New(p.Pos)}
 			}
 			last := val.Elements[len(val.Elements)-1]
 			*expr.SignalVal.Normalize() = object.Value{InnerValue: object.Array{Elements: val.Elements[:len(val.Elements)-1]}}
@@ -736,15 +756,7 @@ func (p PrefixExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*obje
 		if p.Operator == operators.Dec {
 			runes := []rune(val.Value)
 			if len(runes) == 0 {
-				return object.ExpressionResult{Trace: stacktrace.New(p.Pos),
-					Signal: signal.SignalRaise,
-					SignalVal: &object.Value{
-						InnerValue: object.Error{
-							Code:    errors.ValueError,
-							Message: "string is empty",
-						},
-					},
-				}
+				return object.ExpressionResult{Trace: stacktrace.New(p.Pos)}
 			}
 			last := runes[len(runes)-1]
 			*expr.SignalVal.Normalize() = object.Value{InnerValue: object.String{Value: string(runes[:len(runes)-1])}}
