@@ -6,6 +6,7 @@ const (
 	Bool    = "__bool__"
 	Number  = "__number__"
 	Iter    = "__iter__"
+	Next    = "__next__"
 	Display = "__display__"
 	Call    = "__call__"
 	Slice   = "__slice__"

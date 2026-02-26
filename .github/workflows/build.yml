@@ -20,7 +20,7 @@ jobs:
             - name: Build
               run: |
                   mkdir -p bin/${{ matrix.os }}
-                  go build -o bin/${{ matrix.os }}/aqua ./cmd/aqua
+                  go build -o bin/${{ matrix.os }}/aqua aqua.go
             - name: Upload binaries
               uses: actions/upload-artifact@v3
               with:

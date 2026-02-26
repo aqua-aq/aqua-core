@@ -539,6 +539,12 @@ func (f ForExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.
 	if iter.Signal.Has() {
 		return iter.Clone(clone)
 	}
+	if AttrExists(iter.SignalVal.Normalize(), keywords.Next) {
+		iter = GetAttrMethod(iter.SignalVal.Normalize(), keywords.Next, f.Pos)
+		if iter.Signal.Has() {
+			return iter
+		}
+	}
 	arguments := object.Arguments{Last: f.Arguments.Last}
 	for _, arg := range f.Arguments.Elements {
 		res := IntoEval(arg.Default).Eval(vm, scope, true)

@@ -106,13 +106,13 @@ func (p *Parser) ParseObjectDeclaration() (ast.ObjectDec, error) {
 			if err != nil {
 				return ast.ObjectDec{}, err
 			}
-			_, err = p.Expect(tokens.TokenColumn)
-			if err != nil {
-				return ast.ObjectDec{}, err
-			}
-			expr, err := p.Expression(power.PowerPatternAssigment, false)
-			if err != nil {
-				return ast.ObjectDec{}, err
+			var expr ast.Expression = ast.NullDec{Pos: ident.Pos}
+			if peek, _ := p.Peek(0); peek.Type == tokens.TokenColumn {
+				p.Move()
+				expr, err = p.Expression(power.PowerPatternAssigment, false)
+				if err != nil {
+					return ast.ObjectDec{}, err
+				}
 			}
 			vals = append(vals, ast.ObjectVal{
 				Name: ast.IdentExpression{
