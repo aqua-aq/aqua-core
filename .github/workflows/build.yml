@@ -1,28 +1,37 @@
 name: Build Aqua
+
 on:
-    push:
-        branches: [main]
-    workflow_dispatch:
+  push:
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
-    build:
-        runs-on: ubuntu-latest
-        strategy:
-            matrix:
-                os: [ubuntu-latest, macos-latest, windows-latest]
-                go: [1.24.2]
-        steps:
-            - uses: actions/checkout@v3
-            - name: Set up Go
-              uses: actions/setup-go@v4
-              with:
-                  go-version: ${{ matrix.go }}
-            - name: Build
-              run: |
-                  mkdir -p bin/${{ matrix.os }}
-                  go build -o bin/${{ matrix.os }}/aqua aqua.go
-            - name: Upload binaries
-              uses: actions/upload-artifact@v3
-              with:
-                  name: aqua-${{ matrix.os }}
-                  path: bin/${{ matrix.os }}/aqua
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        go: [1.24.2]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+
+      - name: Build
+        run: |
+            mkdir -p bin/${{ matrix.os }}
+            if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            go build -o bin/${{ matrix.os }}/aqua.exe aqua.go
+            else
+            go build -o bin/${{ matrix.os }}/aqua aqua.go
+            fi
+
+      - name: Upload binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: aqua-${{ matrix.os }}
+          path: bin/${{ matrix.os }}/aqua
