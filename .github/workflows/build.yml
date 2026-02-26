@@ -41,11 +41,11 @@ jobs:
         with:
           tag_name: v${{ env.VERSION }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
 
       - name: Upload binaries
         uses: softprops/action-gh-release@v2
         with:
           files: bin/*/*
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
