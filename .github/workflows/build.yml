@@ -1,11 +1,11 @@
 name: Build & Release Aqua
+
 on:
-  push:
-    branches: [main]
-  workflow_dispatch:
+  release:
+    types: [created]
 
 jobs:
-  build-and-release:
+  build-and-upload:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -14,13 +14,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
       - name: Set version
-        id: version
         run: |
-          VERSION=$(cat version.txt)
+          VERSION=${GITHUB_REF#refs/tags/}
           echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "Version: $VERSION"
+          echo "Building release version $VERSION"
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -34,18 +32,16 @@ jobs:
           mkdir -p bin/${{ matrix.os }}-${{ matrix.arch }}
           GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} go build -o bin/${{ matrix.os }}-${{ matrix.arch }}/aqua$EXT aqua.go
 
-      # 5. Create or get release
-      - name: Create GitHub Release
-        id: create_release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ env.VERSION }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+      - name: Zip binaries
+        run: |
+          cd bin
+          zip -r ../aqua-${{ matrix.os }}-${{ matrix.arch }}.zip ./${{ matrix.os }}-${{ matrix.arch }}
+          cd ..
 
-      - name: Upload binaries
+      # 6. Upload to release
+      - name: Upload release asset
         uses: softprops/action-gh-release@v2
         with:
-          files: bin/*/*
+          files: aqua-${{ matrix.os }}-${{ matrix.arch }}.zip
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }} 
