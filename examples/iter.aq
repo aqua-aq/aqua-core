@@ -1,0 +1,92 @@
+sub iter(v)
+    switch typeof v
+    case "object" &v
+    case "array" ArrayIter(&v)
+    case "subroutine" SubroutineIter(&v)
+    default raise: error(TypeError, "unexpected type @{typeof v} as an iterator")
+    end
+end
+
+sub SubroutineIter(s)
+    it.s = s
+    return
+with {
+    s,
+    sub __next__() it.s() end,
+    sub __length__() len(it.s) end # unknown length should raise an error
+}
+
+sub ArrayIter(array)
+    it.array = &array
+    return
+with {
+    array,
+    current: 0, 
+    sub __next__() 
+        if len(it) <= it.current 
+            raise: stop
+        end
+        it.current++
+        &it.array[it.current-1]
+    end,
+    sub __length__() len(&it.array) end
+}
+
+sub MapIter(s, i)
+    it.s = s
+    it.iter = &i
+    return
+with {
+    iter, s,
+    sub __next__() 
+       &it.s(&it.iter.>__next__())
+    end,
+    sub __length__() len(&it.iter) end
+}
+sub map(s) 
+    MapIter(s, &iter(&it))
+end
+
+sub FilterIter(s, i)
+    it.s = s
+    it.iter = &i
+    return
+with {
+    iter, s,
+    sub __next__()
+        while true
+            if it.s(let next = it.iter.>__next__())
+                return: &next
+            end
+        end
+    end,
+    sub __length__() len(null) end # unknown length
+}
+
+sub filter(s)
+    FilterIter(s, iter(&it))
+end
+
+sub range(max) 
+    it.max = max
+    return
+with {
+    current:0, 
+    max,
+    sub __next__() 
+        if it.max <= it.current 
+            raise: stop
+        end
+        it.current++ -1
+    end,
+    sub __length__() it.max end
+}
+
+sub list(iter)
+    for i in iter
+        it += i
+    end
+    return
+with []
+
+println(list(range(10) -> filter(sub(i) i % 2 == 0 end) -> map(sub(i) i*2 end)))
