@@ -3,9 +3,9 @@ package object
 import (
 	"fmt"
 
+	"github.com/aqua-aq/aqua-core/pkg/errors"
 	"github.com/aqua-aq/aqua-core/pkg/pos"
 	"github.com/aqua-aq/aqua-core/pkg/stacktrace"
-	"github.com/aqua-aq/aqua-core/pkg/errors"
 	"github.com/aqua-aq/aqua-core/source/object/signal"
 )
 
@@ -53,23 +53,13 @@ func (s ExpressionResult) IntoSubroutineResultStrict(pos pos.Pos) SubroutineResu
 	if !ok {
 		return SubroutineResult{Trace: stacktrace.New(pos),
 			Signal: signal.SubroutineSignalRaise,
-			SignalVal: &Value{InnerValue: Error{
+			SignalVal: New(Error{
 				Code:    errors.InvalidSignal,
 				Message: fmt.Sprintf("expected none/return/raise, got %v", res.Signal),
-			}},
+			}),
 		}
 	}
 	return res
-}
-func (s ExpressionResult) Clone(need bool) ExpressionResult {
-	if !need {
-		return s
-	}
-	return ExpressionResult{
-		Signal:    s.Signal,
-		SignalVal: s.SignalVal.Normalize().Clone(),
-		Trace:     s.Trace,
-	}
 }
 
 func (s ExpressionResult) String() string {

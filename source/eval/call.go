@@ -3,9 +3,9 @@ package eval
 import (
 	"fmt"
 
+	"github.com/aqua-aq/aqua-core/pkg/errors"
 	"github.com/aqua-aq/aqua-core/pkg/pos"
 	"github.com/aqua-aq/aqua-core/pkg/stacktrace"
-	"github.com/aqua-aq/aqua-core/pkg/errors"
 	"github.com/aqua-aq/aqua-core/source/keywords"
 	"github.com/aqua-aq/aqua-core/source/object"
 	"github.com/aqua-aq/aqua-core/source/object/signal"
@@ -20,16 +20,16 @@ func Call(vm *vm.VM[*object.Value], sub *object.Value, args []*object.Value, clo
 		}
 		sub = method.SignalVal.Normalize()
 	}
-	method, ok := sub.Normalize().InnerValue.(object.Method)
+	method, ok := sub.Normalize().InnerValue().(object.Method)
 	if !ok {
-		subroutine, ok := sub.Normalize().InnerValue.(*object.Subroutine)
+		subroutine, ok := sub.Normalize().InnerValue().(*object.Subroutine)
 		if !ok {
 			return object.ExpressionResult{Trace: stacktrace.New(pos),
 				Signal: signal.SignalRaise,
-				SignalVal: &object.Value{InnerValue: object.Error{
+				SignalVal: object.New(object.Error{
 					Code:    errors.TypeError,
 					Message: fmt.Sprintf("expected subroutine, got %v", sub.Normalize().Type()),
-				}},
+				}),
 			}
 		}
 		method = object.Method{
@@ -50,10 +50,10 @@ func Call(vm *vm.VM[*object.Value], sub *object.Value, args []*object.Value, clo
 		if !ok {
 			return object.ExpressionResult{Trace: stacktrace.New(pos),
 				Signal: signal.SignalRaise,
-				SignalVal: &object.Value{InnerValue: object.Error{
+				SignalVal: object.New(object.Error{
 					Code:    errors.InvalidSignal,
 					Message: fmt.Sprintf("expected none/return/raise, got %v", res.Signal),
-				}},
+				}),
 			}
 		}
 	}
@@ -65,28 +65,28 @@ func Call(vm *vm.VM[*object.Value], sub *object.Value, args []*object.Value, clo
 }
 
 func Bind(sub, it *object.Value, pos pos.Pos) object.ExpressionResult {
-	switch v := sub.Normalize().InnerValue.(type) {
+	switch v := sub.Normalize().InnerValue().(type) {
 	case object.Method:
 		return object.ExpressionResult{Trace: stacktrace.New(pos),
-			SignalVal: &object.Value{InnerValue: object.Method{
+			SignalVal: object.New(object.Method{
 				Subroutine: v.Subroutine,
 				It:         it,
-			}},
+			}),
 		}
 	case *object.Subroutine:
 		return object.ExpressionResult{Trace: stacktrace.New(pos),
-			SignalVal: &object.Value{InnerValue: object.Method{
+			SignalVal: object.New(object.Method{
 				Subroutine: v,
 				It:         it,
-			}},
+			}),
 		}
 	default:
 		return object.ExpressionResult{Trace: stacktrace.New(pos),
 			Signal: signal.SignalRaise,
-			SignalVal: &object.Value{InnerValue: object.Error{
+			SignalVal: object.New(object.Error{
 				Code:    errors.TypeError,
 				Message: fmt.Sprintf("expected subroutine, got %v", sub.Type()),
-			}},
+			}),
 		}
 	}
 }

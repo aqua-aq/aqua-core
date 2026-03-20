@@ -8,12 +8,12 @@ import (
 	"github.com/aqua-aq/aqua-core/source/vm"
 )
 
-func DeclareSubroutine(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool, name string, s ast.SubroutineDec) object.ExpressionResult {
+func DeclareSubroutine(vm *vm.VM[*object.Value], scope scope.Scope[string, *object.Value], clone bool, name string, s ast.SubroutineDec) object.ExpressionResult {
 	arguments := object.Arguments{Last: s.Arguments.Last}
 	for _, arg := range s.Arguments.Elements {
 		res := IntoEval(arg.Default).Eval(vm, scope, true)
 		if res.Signal.Has() {
-			return res.Clone(clone)
+			return Clone(clone, vm, res, s.Pos)
 		}
 		arguments.Elements = append(arguments.Elements, object.Argument{
 			Name:    arg.Name.Ident,
@@ -22,17 +22,15 @@ func DeclareSubroutine(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value
 	}
 	res := IntoEval(s.Prototype).Eval(vm, scope, true)
 	if res.Signal.Has() {
-		return res.Clone(clone)
+		return Clone(clone, vm, res, s.Pos)
 	}
 	return object.ExpressionResult{Trace: stacktrace.New(s.Pos),
-		SignalVal: &object.Value{
-			InnerValue: &object.Subroutine{
-				Arguments: arguments,
-				Scope:     scope,
-				Prototype: res.SignalVal.Normalize(),
-				Code:      s.Body,
-				Name:      name,
-			},
-		},
+		SignalVal: object.New(&object.Subroutine{
+			Arguments: arguments,
+			Scope:     scope,
+			Prototype: res.SignalVal.Normalize(),
+			Code:      s.Body,
+			Name:      name,
+		}),
 	}
 }

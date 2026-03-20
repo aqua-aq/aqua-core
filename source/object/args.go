@@ -4,7 +4,7 @@ import (
 	"github.com/aqua-aq/aqua-core/pkg/scope"
 )
 
-func ParseArgs(args Arguments, vals []*Value, scope scope.Scope[*Value]) {
+func ParseArgs(args Arguments, vals []*Value, scope scope.Scope[string,*Value]) {
 	for i, arg := range args.Elements {
 		var val *Value
 		if i >= len(vals) {
@@ -25,8 +25,6 @@ func ParseArgs(args Arguments, vals []*Value, scope scope.Scope[*Value]) {
 			rest = []*Value{}
 		}
 
-		scope.Set(*args.Last, &Value{
-			Array{Elements: rest},
-		})
+		scope.Set(*args.Last, New(Array{Elements: rest}))
 	}
 }

@@ -2,21 +2,33 @@ package eval
 
 import (
 	"github.com/aqua-aq/aqua-core/pkg/pos"
-	"github.com/aqua-aq/aqua-core/pkg/stacktrace"
 	"github.com/aqua-aq/aqua-core/source/keywords"
 	"github.com/aqua-aq/aqua-core/source/object"
 	"github.com/aqua-aq/aqua-core/source/vm"
 )
 
-func Clone(vm *vm.VM[*object.Value], val *object.Value, pos pos.Pos) object.ExpressionResult {
-	if !AttrExists(val.Normalize(), keywords.Clone) {
-		return object.ExpressionResult{Trace: stacktrace.New(pos),
-			SignalVal: val.Normalize().DeepClone(),
+func Clone(clone bool, vm *vm.VM[*object.Value], expr object.ExpressionResult, pos pos.Pos) object.ExpressionResult {
+	if !clone {
+		return expr
+	}
+	if !AttrExists(expr.SignalVal.Normalize(), keywords.Clone) {
+		return object.ExpressionResult{
+			SignalVal: expr.SignalVal.Clone(),
+			Signal:    expr.Signal,
+			Trace:     expr.Trace,
 		}
 	}
-	method := GetAttrMethod(val.Normalize(), keywords.Iter, pos)
+	method := GetAttrMethod(expr.SignalVal.Normalize(), keywords.Clone, pos)
 	if method.Signal.Has() {
 		return method
 	}
-	return Call(vm, method.SignalVal.Normalize(), nil, false, pos, nil)
+	res := Call(vm, method.SignalVal.Normalize(), nil, false, pos, nil)
+	if res.Signal.Has() {
+		return res
+	}
+	return object.ExpressionResult{
+		Trace:     expr.Trace,
+		Signal:    expr.Signal,
+		SignalVal: res.SignalVal,
+	}
 }

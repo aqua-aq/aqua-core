@@ -7,7 +7,7 @@ import (
 	"github.com/aqua-aq/aqua-core/source/vm"
 )
 
-func RunBlock(b BlockExpression, vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], clone bool, export map[string]*object.Value) object.ExpressionResult {
+func RunBlock(b BlockExpression, vm *vm.VM[*object.Value], scope scope.Scope[string, *object.Value], clone bool, export map[string]*object.Value) object.ExpressionResult {
 	scope = scope.Push()
 	var res object.ExpressionResult
 	for _, expr := range b.Expressions {
@@ -19,9 +19,8 @@ func RunBlock(b BlockExpression, vm *vm.VM[*object.Value], scope scope.Scope[*ob
 		}
 
 		if res.Signal.Has() {
-			return res.Clone(clone)
+			return Clone(clone, vm, res, b.Pos)
 		}
-
 	}
 	for k := range export {
 		v, ok := scope.Get(k)
@@ -31,5 +30,5 @@ func RunBlock(b BlockExpression, vm *vm.VM[*object.Value], scope scope.Scope[*ob
 		}
 
 	}
-	return res.Clone(clone)
+	return Clone(clone, vm, res, b.Pos)
 }

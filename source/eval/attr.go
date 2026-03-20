@@ -3,40 +3,38 @@ package eval
 import (
 	"fmt"
 
+	"github.com/aqua-aq/aqua-core/pkg/errors"
 	"github.com/aqua-aq/aqua-core/pkg/pos"
 	"github.com/aqua-aq/aqua-core/pkg/stacktrace"
-	"github.com/aqua-aq/aqua-core/pkg/errors"
 	"github.com/aqua-aq/aqua-core/source/object"
 	"github.com/aqua-aq/aqua-core/source/object/signal"
 )
 
 func GetAttr(value *object.Value, name string, pos pos.Pos) object.ExpressionResult {
-	obj, ok := value.Normalize().InnerValue.(object.Object)
+	obj, ok := value.Normalize().InnerValue().(object.Object)
 	if !ok {
-		return object.ExpressionResult{Signal: signal.SignalRaise, SignalVal: &object.Value{
-			InnerValue: object.Error{
-				Code:    errors.TypeError,
-				Message: fmt.Sprintf("expected an object, got %v", value.Type()),
-			}},
+		return object.ExpressionResult{Signal: signal.SignalRaise, SignalVal: object.New(object.Error{
+			Code:    errors.TypeError,
+			Message: fmt.Sprintf("expected an object, got %v", value.Type()),
+		}),
 			Trace: stacktrace.New(pos),
 		}
 	}
 
 	if _, ok := obj.Map[name]; !ok {
-		obj.Map[name] = &object.Value{InnerValue: object.Null{}}
+		obj.Map[name] = object.New(object.Null{})
 
 	}
 	return object.ExpressionResult{SignalVal: obj.Map[name].Normalize(), Trace: stacktrace.New(pos)}
 }
 
 func DeleteAttr(value *object.Value, name string, pos pos.Pos) object.ExpressionResult {
-	obj, ok := value.Normalize().InnerValue.(object.Object)
+	obj, ok := value.Normalize().InnerValue().(object.Object)
 	if !ok {
-		return object.ExpressionResult{Signal: signal.SignalRaise, SignalVal: &object.Value{
-			InnerValue: object.Error{
-				Code:    errors.TypeError,
-				Message: fmt.Sprintf("expected an object, got %v", value.Type()),
-			}},
+		return object.ExpressionResult{Signal: signal.SignalRaise, SignalVal: object.New(object.Error{
+			Code:    errors.TypeError,
+			Message: fmt.Sprintf("expected an object, got %v", value.Type()),
+		}),
 			Trace: stacktrace.New(pos),
 		}
 	}
@@ -55,7 +53,7 @@ func GetAttrMethod(value *object.Value, name string, pos pos.Pos) object.Express
 }
 
 func AttrExists(value *object.Value, name string) bool {
-	obj, ok := value.Normalize().InnerValue.(object.Object)
+	obj, ok := value.Normalize().InnerValue().(object.Object)
 	if !ok {
 		return false
 	}
