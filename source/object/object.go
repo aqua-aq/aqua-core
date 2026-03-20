@@ -22,7 +22,7 @@ type InnerValue interface {
 }
 
 type Value struct {
-	InnerValue
+	InnerValue InnerValue
 }
 
 type (
@@ -62,15 +62,9 @@ type (
 	Array  struct{ Elements []*Value }
 )
 
-func (Object) value() {}
-func (o Object) Clone() *Value {
-	oMap := make(map[string]*Value, len(o.Map))
-	for k, v := range o.Map {
-		oMap[k] = v.Clone()
-	}
-	return &Value{Object{oMap}}
-}
-func (Object) Type() Type { return TypeObject }
+func (Object) value()          {}
+func (o Object) Clone() *Value { return &Value{o} }
+func (Object) Type() Type      { return TypeObject }
 func (o Object) String() string {
 	keys := make([]string, 0, len(o.Map))
 	for k := range o.Map {
@@ -104,28 +98,20 @@ func (Null) String() string { return "null" }
 func (Null) Equals(value *Value) bool {
 	return value.Type() == TypeNull
 }
-func (Error) value() {}
-func (e Error) Clone() *Value {
-	return &Value{e}
-}
-func (Error) Type() Type { return TypeError }
+func (Error) value()          {}
+func (e Error) Clone() *Value { return &Value{e} }
+func (Error) Type() Type      { return TypeError }
 func (e Error) Equals(value *Value) bool {
 	if err, ok := value.Normalize().InnerValue.(Error); ok {
 		return e == err
 	}
 	return false
 }
-func (e Error) String() string {
-	return fmt.Sprintf("%s", errors.Error(e).Error())
-}
-func (*Subroutine) value() {}
-func (s *Subroutine) Clone() *Value {
-	return &Value{s}
-}
-func (*Subroutine) Type() Type { return TypeSubroutine }
-func (s *Subroutine) String() string {
-	return fmt.Sprintf("%v", s.Arguments)
-}
+func (e Error) String() string       { return errors.Error(e).Error() }
+func (*Subroutine) value()           {}
+func (s *Subroutine) Clone() *Value  { return &Value{s} }
+func (*Subroutine) Type() Type       { return TypeSubroutine }
+func (s *Subroutine) String() string { return fmt.Sprintf("%s %v", s.Name, s.Arguments) }
 func (s *Subroutine) Equals(value *Value) bool {
 	if sub, ok := value.Normalize().InnerValue.(*Subroutine); ok {
 		return s == sub
@@ -135,10 +121,8 @@ func (s *Subroutine) Equals(value *Value) bool {
 	}
 	return false
 }
-func (Method) value() {}
-func (m Method) Clone() *Value {
-	return &Value{m}
-}
+func (Method) value()           {}
+func (m Method) Clone() *Value  { return &Value{m} }
 func (Method) Type() Type       { return TypeSubroutine }
 func (m Method) String() string { return m.Subroutine.String() }
 func (m Method) Equals(value *Value) bool {
@@ -150,10 +134,8 @@ func (m Method) Equals(value *Value) bool {
 	}
 	return false
 }
-func (Number) value() {}
-func (n Number) Clone() *Value {
-	return &Value{n}
-}
+func (Number) value()           {}
+func (n Number) Clone() *Value  { return &Value{n} }
 func (Number) Type() Type       { return TypeNumber }
 func (n Number) String() string { return fmt.Sprintf("%v", n.Value) }
 func (n Number) Equals(value *Value) bool {
@@ -162,10 +144,8 @@ func (n Number) Equals(value *Value) bool {
 	}
 	return false
 }
-func (String) value() {}
-func (s String) Clone() *Value {
-	return &Value{s}
-}
+func (String) value()           {}
+func (s String) Clone() *Value  { return &Value{s} }
 func (String) Type() Type       { return TypeString }
 func (s String) String() string { return fmt.Sprintf("%v", s.Value) }
 func (s String) Equals(value *Value) bool {
@@ -174,10 +154,8 @@ func (s String) Equals(value *Value) bool {
 	}
 	return false
 }
-func (Bool) value() {}
-func (b Bool) Clone() *Value {
-	return &Value{b}
-}
+func (Bool) value()           {}
+func (b Bool) Clone() *Value  { return &Value{b} }
 func (Bool) Type() Type       { return TypeBool }
 func (b Bool) String() string { return fmt.Sprintf("%v", b.Value) }
 func (b Bool) Equals(value *Value) bool {
@@ -186,15 +164,9 @@ func (b Bool) Equals(value *Value) bool {
 	}
 	return false
 }
-func (Array) value() {}
-func (a Array) Clone() *Value {
-	clone := make([]*Value, 0, len(a.Elements))
-	for _, v := range a.Elements {
-		clone = append(clone, v.Clone())
-	}
-	return &Value{Array{clone}}
-}
-func (Array) Type() Type { return TypeArray }
+func (Array) value()          {}
+func (a Array) Clone() *Value { return &Value{a} }
+func (Array) Type() Type      { return TypeArray }
 func (a Array) String() string {
 	var b strings.Builder
 	b.WriteString("[")
@@ -251,14 +223,33 @@ func (v *Value) Normalize() *Value {
 	}
 	return v
 }
-
-func (v *Value) String() string {
-	return v.Normalize().InnerValue.String()
-}
-
+func (v *Value) String() string           { return v.Normalize().InnerValue.String() }
+func (v *Value) Clone() *Value            { return v.Normalize().InnerValue.Clone() }
+func (v *Value) Equals(value *Value) bool { return v.Normalize().InnerValue.Equals(value.Normalize()) }
+func (v *Value) Type() Type               { return v.Normalize().InnerValue.Type() }
 func IntoValue(err error) *Value {
 	if e, ok := err.(errors.Error); ok {
 		return &Value{InnerValue: Error(e)}
 	}
 	return &Value{InnerValue: String{Value: err.Error()}}
+}
+
+func (v *Value) DeepClone() *Value {
+	value := v.Normalize()
+	switch inner := value.InnerValue.(type) {
+	case Object:
+		cloned := make(map[string]*Value, len(inner.Map))
+		for k, v := range inner.Map {
+			cloned[k] = v.DeepClone()
+		}
+		return &Value{Object{cloned}}
+	case Array:
+		cloned := make([]*Value, len(inner.Elements))
+		for i, v := range inner.Elements {
+			cloned[i] = v.DeepClone()
+		}
+		return &Value{Array{cloned}}
+	default:
+		return v.Clone()
+	}
 }
