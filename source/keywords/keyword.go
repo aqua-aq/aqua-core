@@ -12,6 +12,7 @@ const (
 	Slice   = "__slice__"
 	Len     = "__length__"
 	Dispose = "__dispose__"
+	Clone   = "__clone__"
 
 	Neg = "__neg__"
 	Not = "__not__"

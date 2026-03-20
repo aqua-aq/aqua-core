@@ -20,25 +20,23 @@ import (
 
 func AddGlobalFunction(
 	name string,
-	f func(*vm.VM[*object.Value], scope.Scope[*object.Value]) object.SubroutineResult,
+	f func(*vm.VM[*object.Value], scope.Scope[string, *object.Value]) object.SubroutineResult,
 	args object.Arguments,
-	scope scope.Scope[*object.Value]) {
+	scope scope.Scope[string, *object.Value]) {
 	sub := object.Subroutine{
 		Name:      name,
 		Arguments: args,
 		BuiltIn:   f,
 		Scope:     scope,
 	}
-	scope.Set(name, &object.Value{
-		InnerValue: &sub,
-	})
+	scope.Set(name, object.New(&sub))
 }
 
 var last = "args"
 var PrintArgs = object.Arguments{Last: &last}
 
-func Print(ln bool, name string) func(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value]) object.SubroutineResult {
-	return func(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value]) object.SubroutineResult {
+func Print(ln bool, name string) func(vm *vm.VM[*object.Value], scope scope.Scope[string, *object.Value]) object.SubroutineResult {
+	return func(vm *vm.VM[*object.Value], scope scope.Scope[string, *object.Value]) object.SubroutineResult {
 		v, ok := scope.Get(last)
 		if !ok {
 			return Raise(name, object.Error{
@@ -46,7 +44,7 @@ func Print(ln bool, name string) func(vm *vm.VM[*object.Value], scope scope.Scop
 				Message: fmt.Sprintf("expected argument %s", last),
 			})
 		}
-		args, ok := v.Normalize().InnerValue.(object.Array)
+		args, ok := v.Normalize().InnerValue().(object.Array)
 		if !ok {
 			return Raise(name, object.Error{
 				Code:    errors.TypeError,
@@ -75,10 +73,10 @@ func Print(ln bool, name string) func(vm *vm.VM[*object.Value], scope scope.Scop
 var firstArgument = "first"
 var InputArguments = object.Arguments{Elements: []object.Argument{{
 	Name:    firstArgument,
-	Default: &object.Value{InnerValue: object.String{Value: ""}},
+	Default: object.New(object.String{Value: ""}),
 }}}
 
-func Input(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value]) object.SubroutineResult {
+func Input(vm *vm.VM[*object.Value], scope scope.Scope[string, *object.Value]) object.SubroutineResult {
 	prompt, ok := scope.Get(firstArgument)
 	if !ok {
 		return Raise("input", object.Error{
@@ -94,12 +92,12 @@ func Input(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value]) object.Su
 
 	reader := bufio.NewReader(os.Stdin)
 	s, _ := reader.ReadString('\n')
-	return object.SubroutineResult{SignalVal: &object.Value{InnerValue: object.String{Value: s}}, Trace: stacktrace.New(pos.BuiltInPos("input"))}
+	return object.SubroutineResult{SignalVal: object.New(object.String{Value: s}), Trace: stacktrace.New(pos.BuiltInPos("input"))}
 }
 
 var FirstArguments = object.Arguments{Elements: []object.Argument{{Name: firstArgument}}}
 
-func Bool(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value]) object.SubroutineResult {
+func Bool(vm *vm.VM[*object.Value], scope scope.Scope[string, *object.Value]) object.SubroutineResult {
 	first, ok := scope.Get(firstArgument)
 	if !ok {
 		return Raise("bool", object.Error{
@@ -112,9 +110,9 @@ func Bool(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value]) object.Sub
 	if sErr := err.IntoSubroutineResultStrict(pos.BuiltInPos("bool")); err.Signal.Has() {
 		return sErr
 	}
-	return object.SubroutineResult{SignalVal: &object.Value{InnerValue: object.Bool{Value: b}}, Trace: stacktrace.New(pos.BuiltInPos("number"))}
+	return object.SubroutineResult{SignalVal: object.New(object.Bool{Value: b}), Trace: stacktrace.New(pos.BuiltInPos("number"))}
 }
-func Number(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value]) object.SubroutineResult {
+func Number(vm *vm.VM[*object.Value], scope scope.Scope[string, *object.Value]) object.SubroutineResult {
 	first, ok := scope.Get(firstArgument)
 	if !ok {
 		return Raise("number", object.Error{
@@ -127,10 +125,10 @@ func Number(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value]) object.S
 	if sErr := err.IntoSubroutineResultStrict(pos.BuiltInPos("number")); err.Signal.Has() {
 		return sErr
 	}
-	return object.SubroutineResult{SignalVal: &object.Value{InnerValue: object.Number{Value: n}}, Trace: stacktrace.New(pos.BuiltInPos("number"))}
+	return object.SubroutineResult{SignalVal: object.New(object.Number{Value: n}), Trace: stacktrace.New(pos.BuiltInPos("number"))}
 }
 
-func Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value]) object.SubroutineResult {
+func Eval(vm *vm.VM[*object.Value], scope scope.Scope[string, *object.Value]) object.SubroutineResult {
 	first, ok := scope.Get(firstArgument)
 	if !ok {
 		return Raise("eval", object.Error{
@@ -146,7 +144,7 @@ func Eval(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value]) object.Sub
 	return err.IntoSubroutineResultStrict(pos.BuiltInPos("eval"))
 }
 
-func Len(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value]) object.SubroutineResult {
+func Len(vm *vm.VM[*object.Value], scope scope.Scope[string, *object.Value]) object.SubroutineResult {
 	first, ok := scope.Get(firstArgument)
 	if !ok {
 		return Raise("eval", object.Error{
@@ -156,7 +154,7 @@ func Len(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value]) object.Subr
 	}
 
 	var l int
-	switch v := first.Normalize().InnerValue.(type) {
+	switch v := first.Normalize().InnerValue().(type) {
 	case object.Object:
 		if eval.AttrExists(first, keywords.Len) {
 			method := eval.GetAttrMethod(first, keywords.Len, pos.BuiltInPos("len"))
@@ -182,10 +180,10 @@ func Len(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value]) object.Subr
 			Code:    errors.TypeError,
 			Message: fmt.Sprintf("can't get length of %s", first.Normalize().Type())})
 	}
-	return object.SubroutineResult{SignalVal: &object.Value{InnerValue: object.Number{Value: float64(l)}}, Trace: stacktrace.New(pos.BuiltInPos("len"))}
+	return object.SubroutineResult{SignalVal: object.New(object.Number{Value: float64(l)}), Trace: stacktrace.New(pos.BuiltInPos("len"))}
 }
 
-func String(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value]) object.SubroutineResult {
+func String(vm *vm.VM[*object.Value], scope scope.Scope[string, *object.Value]) object.SubroutineResult {
 	first, ok := scope.Get(firstArgument)
 	if !ok {
 		return Raise("string", object.Error{
@@ -197,10 +195,10 @@ func String(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value]) object.S
 	if sErr := err.IntoSubroutineResultStrict(pos.BuiltInPos("string")); err.Signal.Has() {
 		return sErr
 	}
-	return object.SubroutineResult{SignalVal: &object.Value{InnerValue: object.String{Value: str}}, Trace: stacktrace.New(pos.BuiltInPos("string"))}
+	return object.SubroutineResult{SignalVal: object.New(object.String{Value: str}), Trace: stacktrace.New(pos.BuiltInPos("string"))}
 }
 
-func Code(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value]) object.SubroutineResult {
+func Code(vm *vm.VM[*object.Value], scope scope.Scope[string, *object.Value]) object.SubroutineResult {
 	first, ok := scope.Get(firstArgument)
 	if !ok {
 		return Raise("code", object.Error{
@@ -208,8 +206,8 @@ func Code(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value]) object.Sub
 			Message: fmt.Sprintf("expected argument %s", firstArgument),
 		})
 	}
-	if err, ok := first.Normalize().InnerValue.(object.Error); ok {
-		return object.SubroutineResult{SignalVal: &object.Value{InnerValue: object.Number{Value: float64(err.Code)}}, Trace: stacktrace.New(pos.BuiltInPos("code"))}
+	if err, ok := first.Normalize().InnerValue().(object.Error); ok {
+		return object.SubroutineResult{SignalVal: object.New(object.Number{Value: float64(err.Code)}), Trace: stacktrace.New(pos.BuiltInPos("code"))}
 	}
 	return Raise("code", object.Error{
 		Code:    errors.TypeError,
@@ -217,7 +215,7 @@ func Code(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value]) object.Sub
 	})
 }
 
-func StringCode(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value]) object.SubroutineResult {
+func StringCode(vm *vm.VM[*object.Value], scope scope.Scope[string, *object.Value]) object.SubroutineResult {
 	first, ok := scope.Get(firstArgument)
 	if !ok {
 		return Raise("", object.Error{
@@ -225,8 +223,8 @@ func StringCode(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value]) obje
 			Message: fmt.Sprintf("expected argument %s", firstArgument),
 		})
 	}
-	if err, ok := first.Normalize().InnerValue.(object.Error); ok {
-		return object.SubroutineResult{SignalVal: &object.Value{InnerValue: object.Number{Value: float64(err.Code)}}, Trace: stacktrace.New(pos.BuiltInPos("code"))}
+	if err, ok := first.Normalize().InnerValue().(object.Error); ok {
+		return object.SubroutineResult{SignalVal: object.New(object.Number{Value: float64(err.Code)}), Trace: stacktrace.New(pos.BuiltInPos("code"))}
 	}
 	return Raise("code", object.Error{
 		Code:    errors.TypeError,
@@ -234,7 +232,7 @@ func StringCode(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value]) obje
 	})
 }
 
-func Message(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value]) object.SubroutineResult {
+func Message(vm *vm.VM[*object.Value], scope scope.Scope[string, *object.Value]) object.SubroutineResult {
 	first, ok := scope.Get(firstArgument)
 	if !ok {
 		return Raise("message", object.Error{
@@ -242,15 +240,15 @@ func Message(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value]) object.
 			Message: fmt.Sprintf("expected argument %s", firstArgument),
 		})
 	}
-	if err, ok := first.Normalize().InnerValue.(object.Error); ok {
-		return object.SubroutineResult{SignalVal: &object.Value{InnerValue: object.String{Value: err.Message}}, Trace: stacktrace.New(pos.BuiltInPos("message"))}
+	if err, ok := first.Normalize().InnerValue().(object.Error); ok {
+		return object.SubroutineResult{SignalVal: object.New(object.String{Value: err.Message}), Trace: stacktrace.New(pos.BuiltInPos("message"))}
 	}
 	return object.SubroutineResult{
 		Signal: signal.SubroutineSignalRaise,
-		SignalVal: &object.Value{InnerValue: object.Error{
+		SignalVal: object.New(object.Error{
 			Code:    errors.TypeError,
 			Message: fmt.Sprintf("can't get message of %s", first.Normalize().Type()),
-		}},
+		}),
 		Trace: stacktrace.New(pos.BuiltInPos("message")),
 	}
 }
@@ -261,10 +259,10 @@ var ErrorArguments = object.Arguments{Elements: []object.Argument{{
 	Name: code,
 }, {
 	Name:    message,
-	Default: &object.Value{InnerValue: object.String{Value: ""}},
+	Default: object.New(object.String{Value: ""}),
 }}}
 
-func Error(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value]) object.SubroutineResult {
+func Error(vm *vm.VM[*object.Value], scope scope.Scope[string, *object.Value]) object.SubroutineResult {
 	c, ok := scope.Get(code)
 	if !ok {
 		return Raise("error", object.Error{
@@ -293,15 +291,18 @@ func Error(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value]) object.Su
 	if sErr := err.IntoSubroutineResultStrict(pos.BuiltInPos("error")); err.Signal.Has() {
 		return sErr
 	}
-	return object.SubroutineResult{SignalVal: &object.Value{InnerValue: object.Error{Code: errors.Code(intCode), Message: strMessage}}, Trace: stacktrace.New(pos.BuiltInPos("error"))}
+	return object.SubroutineResult{SignalVal: object.New(object.Error{
+		Code:    errors.Code(intCode),
+		Message: strMessage,
+	}), Trace: stacktrace.New(pos.BuiltInPos("error"))}
 }
 
 var ExitArguments = object.Arguments{Elements: []object.Argument{{
 	Name:    firstArgument,
-	Default: &object.Value{InnerValue: object.Number{Value: 0}},
+	Default: object.New(object.Number{Value: 0}),
 }}}
 
-func Exit(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value]) object.SubroutineResult {
+func Exit(vm *vm.VM[*object.Value], scope scope.Scope[string, *object.Value]) object.SubroutineResult {
 	first, ok := scope.Get(firstArgument)
 	if !ok {
 		return Raise("exit", object.Error{
@@ -317,17 +318,18 @@ func Exit(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value]) object.Sub
 	return object.SubroutineResult{Trace: stacktrace.New(pos.BuiltInPos("exit"))}
 }
 
-func Args(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value]) object.SubroutineResult {
+func Args(vm *vm.VM[*object.Value], scope scope.Scope[string, *object.Value]) object.SubroutineResult {
 	args := make([]*object.Value, len(vm.Args))
 	for i, v := range vm.Args {
-		args[i] = &object.Value{InnerValue: object.String{Value: v}}
+		args[i] = object.New(object.String{Value: v})
 	}
-	return object.SubroutineResult{Trace: stacktrace.New(pos.BuiltInPos("args")), SignalVal: &object.Value{
-		InnerValue: object.Array{Elements: args},
-	}}
+	return object.SubroutineResult{
+		Trace:     stacktrace.New(pos.BuiltInPos("args")),
+		SignalVal: object.New(object.Array{Elements: args}),
+	}
 }
 
-func GenerateBuildIn(scope scope.Scope[*object.Value]) {
+func GenerateBuildIn(scope scope.Scope[string, *object.Value]) {
 	AddGlobalFunction("println", Print(true, "println"), PrintArgs, scope)
 	AddGlobalFunction("print", Print(false, "print"), PrintArgs, scope)
 	AddGlobalFunction("input", Input, InputArguments, scope)
@@ -341,23 +343,23 @@ func GenerateBuildIn(scope scope.Scope[*object.Value]) {
 	AddGlobalFunction("error", Error, ErrorArguments, scope)
 	AddGlobalFunction("exit", Exit, ExitArguments, scope)
 	AddGlobalFunction("args", Args, object.Arguments{}, scope)
-	scope.Set("stop", &object.Value{InnerValue: object.Error{Code: errors.IteratorStop}})
-	scope.Set("SyntaxError", &object.Value{InnerValue: object.Number{
+	scope.Set("stop", object.New(object.Error{Code: errors.IteratorStop}))
+	scope.Set("SyntaxError", object.New(object.Number{
 		Value: float64(errors.SyntaxError),
-	}})
-	scope.Set("ImportError", &object.Value{InnerValue: object.Number{
+	}))
+	scope.Set("ImportError", object.New(object.Number{
 		Value: float64(errors.ImportError),
-	}})
-	scope.Set("TypeError", &object.Value{InnerValue: object.Number{
+	}))
+	scope.Set("TypeError", object.New(object.Number{
 		Value: float64(errors.TypeError),
-	}})
-	scope.Set("ValueError", &object.Value{InnerValue: object.Number{
+	}))
+	scope.Set("ValueError", object.New(object.Number{
 		Value: float64(errors.ValueError),
-	}})
-	scope.Set("InvalidSignal", &object.Value{InnerValue: object.Number{
+	}))
+	scope.Set("InvalidSignal", object.New(object.Number{
 		Value: float64(errors.InvalidSignal),
-	}})
-	scope.Set("IteratorStop", &object.Value{InnerValue: object.Number{
+	}))
+	scope.Set("IteratorStop", object.New(object.Number{
 		Value: float64(errors.IteratorStop),
-	}})
+	}))
 }

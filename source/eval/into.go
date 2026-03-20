@@ -15,7 +15,7 @@ import (
 )
 
 func IntoBool(vm *vm.VM[*object.Value], val *object.Value, pos pos.Pos) (bool, object.ExpressionResult) {
-	switch v := val.Normalize().InnerValue.(type) {
+	switch v := val.Normalize().InnerValue().(type) {
 	case object.Bool:
 		return v.Value, object.ExpressionResult{Trace: stacktrace.New(pos)}
 	case object.Null:
@@ -73,7 +73,7 @@ func IntoString(vm *vm.VM[*object.Value], val *object.Value, pos pos.Pos) (strin
 }
 
 func IntoNum(vm *vm.VM[*object.Value], val *object.Value, pos pos.Pos) (float64, object.ExpressionResult) {
-	switch v := val.Normalize().InnerValue.(type) {
+	switch v := val.Normalize().InnerValue().(type) {
 	case object.Bool:
 		if v.Value {
 			return 1, object.ExpressionResult{Trace: stacktrace.New(pos)}
@@ -86,12 +86,11 @@ func IntoNum(vm *vm.VM[*object.Value], val *object.Value, pos pos.Pos) (float64,
 	case object.String:
 		n, err := strconv.ParseFloat(v.Value, 64)
 		if err != nil {
-			return 0, object.ExpressionResult{Trace: stacktrace.New(pos), Signal: signal.SignalRaise, SignalVal: &object.Value{
-				InnerValue: object.Error{
-					Code:    errors.ValueError,
-					Message: err.Error(),
-				},
-			}}
+			return 0, object.ExpressionResult{Trace: stacktrace.New(pos), Signal: signal.SignalRaise, SignalVal: object.New(object.Error{
+				Code:    errors.ValueError,
+				Message: err.Error(),
+			},
+			)}
 		}
 		return n, object.ExpressionResult{Trace: stacktrace.New(pos)}
 	case object.Object:
@@ -111,10 +110,10 @@ func IntoNum(vm *vm.VM[*object.Value], val *object.Value, pos pos.Pos) (float64,
 	return 0, object.ExpressionResult{
 		Trace:  stacktrace.New(pos),
 		Signal: signal.SignalRaise,
-		SignalVal: &object.Value{InnerValue: object.Error{
+		SignalVal: object.New(object.Error{
 			Code:    errors.TypeError,
 			Message: fmt.Sprintf("can't convert value with type %s to number", val.Normalize().Type()),
-		}},
+		}),
 	}
 }
 
@@ -126,12 +125,11 @@ func IntoInt(vm *vm.VM[*object.Value], val *object.Value, pos pos.Pos) (int, obj
 	if math.Floor(f) != f {
 		return 0, object.ExpressionResult{
 			Signal: signal.SignalRaise,
-			SignalVal: &object.Value{
-				InnerValue: object.Error{
+			SignalVal: object.New(object.Error{
 					Code:    errors.TypeError,
 					Message: "expected an integer, got number",
 				},
-			}, Trace: stacktrace.New(pos),
+			), Trace: stacktrace.New(pos),
 		}
 	}
 	return int(f), object.ExpressionResult{Trace: stacktrace.New(pos)}

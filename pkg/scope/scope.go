@@ -1,37 +1,37 @@
 package scope
 
-type Scope[T any] struct {
-	current *scopeFrame[T]
+type Scope[K comparable, V any] struct {
+	current *scopeFrame[K, V]
 }
 
-type scopeFrame[T any] struct {
-	parent   *scopeFrame[T]
-	values   map[string]T
-	pointers map[string]*scopeFrame[T]
+type scopeFrame[K comparable, V any] struct {
+	parent   *scopeFrame[K, V]
+	values   map[K]V
+	pointers map[K]*scopeFrame[K, V]
 }
 
-func New[T any]() Scope[T] {
-	return Scope[T]{
-		current: &scopeFrame[T]{
-			values:   make(map[string]T),
-			pointers: make(map[string]*scopeFrame[T]),
+func New[K comparable, V any]() Scope[K, V] {
+	return Scope[K, V]{
+		current: &scopeFrame[K, V]{
+			values:   make(map[K]V),
+			pointers: make(map[K]*scopeFrame[K, V]),
 		},
 	}
 }
 
-func (s Scope[T]) Get(key string) (T, bool) {
+func (s Scope[K, V]) Get(key K) (V, bool) {
 	if s.current == nil {
-		var zero T
+		var zero V
 		return zero, false
 	}
 	if frame, ok := s.current.pointers[key]; ok {
 		return frame.values[key], true
 	}
-	var zero T
+	var zero V
 	return zero, false
 }
 
-func (s Scope[T]) Has(key string) bool {
+func (s Scope[K, V]) Has(key K) bool {
 	if s.current == nil {
 		return false
 	}
@@ -39,41 +39,41 @@ func (s Scope[T]) Has(key string) bool {
 	return ok
 }
 
-func (s Scope[T]) Push() Scope[T] {
-	newFrame := &scopeFrame[T]{
+func (s Scope[K, V]) Push() Scope[K, V] {
+	newFrame := &scopeFrame[K, V]{
 		parent:   s.current,
-		values:   make(map[string]T),
-		pointers: make(map[string]*scopeFrame[T]),
+		values:   make(map[K]V),
+		pointers: make(map[K]*scopeFrame[K, V]),
 	}
 
 	for k, v := range s.current.pointers {
 		newFrame.pointers[k] = v
 	}
-	return Scope[T]{
+	return Scope[K, V]{
 		current: newFrame,
 	}
 }
 
-func (s Scope[T]) Pop() (Scope[T], bool) {
+func (s Scope[K, V]) Pop() (Scope[K, V], bool) {
 	if s.current == nil || s.current.parent == nil {
-		return Scope[T]{nil}, false
+		return Scope[K, V]{nil}, false
 	}
-	return Scope[T]{s.current.parent}, true
+	return Scope[K, V]{s.current.parent}, true
 }
-func (s Scope[T]) Rebase() Scope[T] {
+func (s Scope[K, V]) Rebase() Scope[K, V] {
 	s, ok := s.Pop()
 	if !ok {
-		return New[T]()
+		return New[K, V]()
 	}
 	return s.Push()
 }
 
-func (s Scope[T]) Set(key string, val T) {
+func (s Scope[K, V]) Set(key K, val V) {
 	s.current.values[key] = val
 	s.current.pointers[key] = s.current
 }
 
-func (s Scope[T]) Delete(key string) bool {
+func (s Scope[K, V]) Delete(key K) bool {
 	if s.current == nil {
 		return false
 	}
@@ -90,7 +90,7 @@ func (s Scope[T]) Delete(key string) bool {
 	return false
 }
 
-func (s Scope[T]) Clear() {
+func (s Scope[K, V]) Clear() {
 	clear(s.current.values)
 	clear(s.current.pointers)
 }

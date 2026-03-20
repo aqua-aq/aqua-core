@@ -12,15 +12,15 @@ import (
 )
 
 func ParseSliceIndex(val *object.Value, length int, pos pos.Pos) (int, object.ExpressionResult) {
-	num, ok := val.Normalize().InnerValue.(object.Number)
+	num, ok := val.Normalize().InnerValue().(object.Number)
 	if !ok || math.Floor(num.Value) != num.Value {
 		return 0, object.ExpressionResult{
 			Trace:  stacktrace.New(pos),
 			Signal: signal.SignalRaise,
-			SignalVal: &object.Value{InnerValue: object.Error{
+			SignalVal: object.New( object.Error{
 				Code:    errors.TypeError,
 				Message: fmt.Sprintf("expected integer in slice index, got %s", val.Normalize().Type()),
-			}},
+			}),
 		}
 	}
 	idx := int(num.Value)

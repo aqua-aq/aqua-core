@@ -4,25 +4,31 @@ import (
 	"fmt"
 	"maps"
 	"slices"
-	"sort"
 	"strings"
 
 	"github.com/aqua-aq/aqua-core/pkg/errors"
 	"github.com/aqua-aq/aqua-core/pkg/scope"
 	"github.com/aqua-aq/aqua-core/source/ast"
 	"github.com/aqua-aq/aqua-core/source/vm"
+	"github.com/google/uuid"
 )
 
 type InnerValue interface {
 	value()
-	Clone() *Value
 	Type() Type
 	Equals(value *Value) bool
-	fmt.Stringer
 }
 
 type Value struct {
-	InnerValue
+	innerValue InnerValue
+	uuid       uuid.UUID
+}
+
+func New(i InnerValue) *Value {
+	return &Value{
+		innerValue: i,
+		uuid:       uuid.New(),
+	}
 }
 
 type (
@@ -36,18 +42,15 @@ type (
 	}
 	Arguments struct {
 		Elements []Argument
-		// optional
-		Last *string
+		Last     *string
 	}
 	Subroutine struct {
 		Name      string
 		Arguments Arguments
-		Scope     scope.Scope[*Value]
+		Scope     scope.Scope[string, *Value]
 		Prototype *Value
-		// optional
-		BuiltIn func(*vm.VM[*Value], scope.Scope[*Value]) SubroutineResult
-		// optional code
-		Code ast.BlockExpression
+		BuiltIn   func(*vm.VM[*Value], scope.Scope[string, *Value]) SubroutineResult
+		Code      ast.BlockExpression
 	}
 	Method struct {
 		Subroutine *Subroutine
@@ -62,161 +65,83 @@ type (
 	Array  struct{ Elements []*Value }
 )
 
-func (Object) value() {}
-func (o Object) Clone() *Value {
-	oMap := make(map[string]*Value, len(o.Map))
-	for k, v := range o.Map {
-		oMap[k] = v.Clone()
-	}
-	return &Value{Object{oMap}}
-}
+func (Object) value()     {}
 func (Object) Type() Type { return TypeObject }
-func (o Object) String() string {
-	keys := make([]string, 0, len(o.Map))
-	for k := range o.Map {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
-	var b strings.Builder
-	b.WriteString("{")
-
-	for i, k := range keys {
-		fmt.Fprintf(&b, "%s: %s", k, o.Map[k].Normalize().String())
-		if i < len(keys)-1 {
-			b.WriteString(", ")
-		}
-	}
-
-	b.WriteString("}")
-	return b.String()
-}
 func (o Object) Equals(value *Value) bool {
-	if obj, ok := value.Normalize().InnerValue.(Object); ok {
+	if obj, ok := value.Normalize().innerValue.(Object); ok {
 		return maps.Equal(o.Map, obj.Map)
 	}
 	return false
 }
-func (Null) value()         {}
-func (Null) Clone() *Value  { return &Value{Null{}} }
-func (Null) Type() Type     { return TypeNull }
-func (Null) String() string { return "null" }
-func (Null) Equals(value *Value) bool {
-	return value.Type() == TypeNull
-}
-func (Error) value() {}
-func (e Error) Clone() *Value {
-	return &Value{e}
-}
-func (Error) Type() Type { return TypeError }
+func (Null) value()                   {}
+func (Null) Type() Type               { return TypeNull }
+func (Null) Equals(value *Value) bool { return value.Type() == TypeNull }
+func (Error) value()                  {}
+func (Error) Type() Type              { return TypeError }
 func (e Error) Equals(value *Value) bool {
-	if err, ok := value.Normalize().InnerValue.(Error); ok {
+	if err, ok := value.Normalize().innerValue.(Error); ok {
 		return e == err
 	}
 	return false
 }
-func (e Error) String() string {
-	return fmt.Sprintf("%s", errors.Error(e).Error())
-}
-func (*Subroutine) value() {}
-func (s *Subroutine) Clone() *Value {
-	return &Value{s}
-}
+func (*Subroutine) value()     {}
 func (*Subroutine) Type() Type { return TypeSubroutine }
-func (s *Subroutine) String() string {
-	return fmt.Sprintf("%v", s.Arguments)
-}
 func (s *Subroutine) Equals(value *Value) bool {
-	if sub, ok := value.Normalize().InnerValue.(*Subroutine); ok {
+	if sub, ok := value.Normalize().innerValue.(*Subroutine); ok {
 		return s == sub
 	}
-	if method, ok := value.Normalize().InnerValue.(Method); ok {
+	if method, ok := value.Normalize().innerValue.(Method); ok {
 		return s == method.Subroutine
 	}
 	return false
 }
-func (Method) value() {}
-func (m Method) Clone() *Value {
-	return &Value{m}
-}
-func (Method) Type() Type       { return TypeSubroutine }
-func (m Method) String() string { return m.Subroutine.String() }
+func (Method) value()     {}
+func (Method) Type() Type { return TypeSubroutine }
 func (m Method) Equals(value *Value) bool {
-	if sub, ok := value.Normalize().InnerValue.(*Subroutine); ok {
+	if sub, ok := value.Normalize().innerValue.(*Subroutine); ok {
 		return m.Subroutine == sub
 	}
-	if method, ok := value.Normalize().InnerValue.(Method); ok {
+	if method, ok := value.Normalize().innerValue.(Method); ok {
 		return m.Subroutine == method.Subroutine
 	}
 	return false
 }
-func (Number) value() {}
-func (n Number) Clone() *Value {
-	return &Value{n}
-}
-func (Number) Type() Type       { return TypeNumber }
-func (n Number) String() string { return fmt.Sprintf("%v", n.Value) }
+func (Number) value()     {}
+func (Number) Type() Type { return TypeNumber }
 func (n Number) Equals(value *Value) bool {
-	if num, ok := value.Normalize().InnerValue.(Number); ok {
+	if num, ok := value.Normalize().innerValue.(Number); ok {
 		return n == num
 	}
 	return false
 }
-func (String) value() {}
-func (s String) Clone() *Value {
-	return &Value{s}
-}
-func (String) Type() Type       { return TypeString }
-func (s String) String() string { return fmt.Sprintf("%v", s.Value) }
+func (String) value()     {}
+func (String) Type() Type { return TypeString }
 func (s String) Equals(value *Value) bool {
-	if str, ok := value.Normalize().InnerValue.(String); ok {
+	if str, ok := value.Normalize().innerValue.(String); ok {
 		return s == str
 	}
 	return false
 }
-func (Bool) value() {}
-func (b Bool) Clone() *Value {
-	return &Value{b}
-}
-func (Bool) Type() Type       { return TypeBool }
-func (b Bool) String() string { return fmt.Sprintf("%v", b.Value) }
+func (Bool) value()     {}
+func (Bool) Type() Type { return TypeBool }
 func (b Bool) Equals(value *Value) bool {
-	if boolean, ok := value.Normalize().InnerValue.(Bool); ok {
+	if boolean, ok := value.Normalize().innerValue.(Bool); ok {
 		return b == boolean
 	}
 	return false
 }
-func (Array) value() {}
-func (a Array) Clone() *Value {
-	clone := make([]*Value, 0, len(a.Elements))
-	for _, v := range a.Elements {
-		clone = append(clone, v.Clone())
-	}
-	return &Value{Array{clone}}
-}
+func (Array) value()     {}
 func (Array) Type() Type { return TypeArray }
-func (a Array) String() string {
-	var b strings.Builder
-	b.WriteString("[")
-
-	for i, v := range a.Elements {
-		b.WriteString(v.Normalize().String())
-
-		if i < len(a.Elements)-1 {
-			b.WriteString(", ")
-		}
-	}
-
-	b.WriteString("]")
-	return b.String()
-}
 func (a Array) Equals(value *Value) bool {
-	if arr, ok := value.Normalize().InnerValue.(Array); ok {
+	if arr, ok := value.Normalize().innerValue.(Array); ok {
 		return slices.Equal(a.Elements, arr.Elements)
 	}
 	return false
 }
 func (a Arguments) String() string {
+	return a.stringify(scope.New[uuid.UUID, struct{}]())
+}
+func (a Arguments) stringify(visited scope.Scope[uuid.UUID, struct{}]) string {
 	sb := strings.Builder{}
 	sb.WriteByte('(')
 	for i, arg := range a.Elements {
@@ -225,7 +150,7 @@ func (a Arguments) String() string {
 		}
 		sb.WriteString(arg.Name)
 		if !arg.Default.Normalize().IsNull() {
-			sb.WriteString("=" + arg.Default.String())
+			sb.WriteString("=" + arg.Default.stringify(visited))
 		}
 	}
 	if a.Last != nil {
@@ -238,27 +163,108 @@ func (a Arguments) String() string {
 	return sb.String()
 }
 func (v *Value) IsNull() bool {
-	_, ok := v.InnerValue.(Null)
+	_, ok := v.innerValue.(Null)
 	return ok
 }
 
 func (v *Value) Normalize() *Value {
 	if v == nil {
-		return &Value{Null{}}
+		return New(Null{})
 	}
-	if v.InnerValue == nil {
-		v.InnerValue = Null{}
+	if v.innerValue == nil {
+		v.innerValue = Null{}
 	}
 	return v
 }
+func (v *Value) String() string { return v.Normalize().stringify(scope.New[uuid.UUID, struct{}]()) }
+func (v *Value) stringify(visited scope.Scope[uuid.UUID, struct{}]) string {
+	visited = visited.Push()
+	if visited.Has(v.uuid) {
+		return "<cycle>"
+	}
+	switch inner := v.innerValue.(type) {
+	case String:
+		return inner.Value
+	case Number:
+		return fmt.Sprint(inner.Value)
+	case Bool:
+		return fmt.Sprint(inner.Value)
+	case Error:
+		return errors.Error(inner).Error()
+	case *Subroutine:
+		return fmt.Sprintf("%s %s", inner.Name, inner.Arguments.stringify(visited))
+	case Method:
+		return fmt.Sprintf("%s %s", inner.Subroutine.Name, inner.Subroutine.Arguments.stringify(visited))
+	case Array:
+		var b strings.Builder
+		b.WriteString("[")
+		for i, v := range inner.Elements {
+			b.WriteString(v.Normalize().stringify(visited))
+			if i < len(inner.Elements)-1 {
+				b.WriteString(", ")
+			}
+		}
+		b.WriteString("]")
+		return b.String()
+	case Object:
+		var b strings.Builder
+		b.WriteString("{")
 
-func (v *Value) String() string {
-	return v.Normalize().InnerValue.String()
+		keys := make([]string, 0, len(inner.Map))
+		for k := range inner.Map {
+			keys = append(keys, k)
+		}
+		slices.Sort(keys)
+
+		for i, k := range keys {
+			fmt.Fprintf(&b, "%s: %s", k, inner.Map[k].Normalize().stringify(visited))
+			if i < len(keys)-1 {
+				b.WriteString(", ")
+			}
+		}
+		b.WriteString("}")
+		return b.String()
+	}
+	return "null"
 }
-
+func (v *Value) Equals(value *Value) bool { return v.Normalize().innerValue.Equals(value.Normalize()) }
+func (v *Value) Type() Type               { return v.Normalize().innerValue.Type() }
 func IntoValue(err error) *Value {
 	if e, ok := err.(errors.Error); ok {
-		return &Value{InnerValue: Error(e)}
+		return &Value{innerValue: Error(e)}
 	}
-	return &Value{InnerValue: String{Value: err.Error()}}
+	return &Value{innerValue: String{Value: err.Error()}}
 }
+
+func (v *Value) Clone() *Value {
+	return v.Normalize().deepClone(map[uuid.UUID]*Value{})
+}
+
+func (v *Value) deepClone(visited map[uuid.UUID]*Value) *Value {
+	if cloned, ok := visited[v.uuid]; ok {
+		return cloned
+	}
+	cloned := New(Null{})
+	visited[v.uuid] = cloned
+
+	switch inner := v.innerValue.(type) {
+	case Object:
+		object := make(map[string]*Value, len(inner.Map))
+		for k, v := range inner.Map {
+			object[k] = v.Normalize().deepClone(visited)
+		}
+		cloned.innerValue = Object{object}
+	case Array:
+		array := make([]*Value, len(inner.Elements))
+		for i, e := range array {
+			array[i] = e.Normalize().deepClone(visited)
+		}
+		cloned.innerValue = Array{array}
+	default:
+		cloned.innerValue = inner
+	}
+	return cloned
+}
+func (v *Value) Uuid() uuid.UUID        { return v.uuid }
+func (v *Value) InnerValue() InnerValue { return v.innerValue }
+func (v *Value) Set(i InnerValue)       { v.innerValue = i }

@@ -12,7 +12,7 @@ import (
 	"github.com/aqua-aq/aqua-core/source/vm"
 )
 
-func Run(vm *vm.VM[*object.Value], scope scope.Scope[*object.Value], expression string, pos pos.Pos, clone bool) object.ExpressionResult {
+func Run(vm *vm.VM[*object.Value], scope scope.Scope[string,*object.Value], expression string, pos pos.Pos, clone bool) object.ExpressionResult {
 	lexer := lexer.NewRelative(expression, pos)
 	lexer.Init()
 	inPos := lexer.Pos

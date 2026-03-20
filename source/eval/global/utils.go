@@ -10,7 +10,7 @@ import (
 func Raise(name string, err object.Error) object.SubroutineResult {
 	return object.SubroutineResult{
 		Signal:    signal.SubroutineSignalRaise,
-		SignalVal: &object.Value{InnerValue: err},
+		SignalVal: object.New(err),
 		Trace:     stacktrace.New(pos.BuiltInPos(name)),
 	}
 }

@@ -55,7 +55,7 @@ func Run(path, name string, vm *vm.VM[*object.Value]) (map[string]*object.Value,
 			export = append(export, next.Value)
 		}
 	}
-	scope := scope.New[*object.Value]()
+	scope := scope.New[string, *object.Value]()
 	global.GenerateBuildIn(scope)
 	sub := eval.DeclareSubroutine(vm, scope, false, fmt.Sprintf("<%s>", name), ast.SubroutineDec{
 		Arguments: ast.Arguments{},
@@ -68,7 +68,7 @@ func Run(path, name string, vm *vm.VM[*object.Value]) (map[string]*object.Value,
 	}
 	vals := make(map[string]*object.Value, len(export))
 	for _, v := range export {
-		vals[v] = &object.Value{InnerValue: object.Null{}}
+		vals[v] = object.New(object.Null{})
 	}
 	call := eval.Call(vm, sub.SignalVal.Normalize(), []*object.Value{}, false, pos, vals)
 	if call.Signal.Has() {

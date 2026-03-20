@@ -25,7 +25,7 @@ func RunRepl(r io.Reader, vm *vm.VM[*object.Value], pos pos.Pos, quiet bool) err
 	var current strings.Builder
 	lexer := lexer.NewWithPos("", pos)
 	lexer.Init()
-	scope := scope.New[*object.Value]()
+	scope := scope.New[string, *object.Value]()
 	global.GenerateBuildIn(scope)
 	fmt.Print("\033[35m-> \033[0m")
 	for {
