@@ -329,6 +329,24 @@ func Args(vm *vm.VM[*object.Value], scope scope.Scope[string, *object.Value]) ob
 	}
 }
 
+var IdArguments = object.Arguments{Elements: []object.Argument{{
+	Name: firstArgument,
+}}}
+
+func Id(vm *vm.VM[*object.Value], scope scope.Scope[string, *object.Value]) object.SubroutineResult {
+	first, ok := scope.Get(firstArgument)
+	if !ok {
+		return Raise("id", object.Error{
+			Code:    errors.ValueError,
+			Message: fmt.Sprintf("expected argument %s", firstArgument),
+		})
+	}
+	return object.SubroutineResult{
+		Trace:     stacktrace.New(pos.BuiltInPos("id")),
+		SignalVal: object.New(object.String{Value: first.Uuid().String()}),
+	}
+}
+
 func GenerateBuildIn(scope scope.Scope[string, *object.Value]) {
 	AddGlobalFunction("println", Print(true, "println"), PrintArgs, scope)
 	AddGlobalFunction("print", Print(false, "print"), PrintArgs, scope)
@@ -343,6 +361,7 @@ func GenerateBuildIn(scope scope.Scope[string, *object.Value]) {
 	AddGlobalFunction("error", Error, ErrorArguments, scope)
 	AddGlobalFunction("exit", Exit, ExitArguments, scope)
 	AddGlobalFunction("args", Args, object.Arguments{}, scope)
+	AddGlobalFunction("id", Id, IdArguments, scope)
 	scope.Set("stop", object.New(object.Error{Code: errors.IteratorStop}))
 	scope.Set("SyntaxError", object.New(object.Number{
 		Value: float64(errors.SyntaxError),
