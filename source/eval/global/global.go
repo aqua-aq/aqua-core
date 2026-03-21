@@ -168,6 +168,7 @@ func Len(vm *vm.VM[*object.Value], scope scope.Scope[string, *object.Value]) obj
 				false,
 				pos.BuiltInPos("len"),
 				nil,
+				false,
 			).IntoSubroutineResultStrict(pos.BuiltInPos("len"))
 		}
 		l = len(v.Map)

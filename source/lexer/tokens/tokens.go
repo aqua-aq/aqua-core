@@ -53,6 +53,7 @@ const (
 	TokenIn
 	TokenNot
 	TokenTypeof
+	TokenNew
 
 	TokenTrue
 	TokenFalse
@@ -174,6 +175,8 @@ func (t TokenType) String() string {
 		return "<not>"
 	case TokenTypeof:
 		return "<typeof>"
+	case TokenNew:
+		return "<new>"
 	case TokenTrue:
 		return "<true>"
 	case TokenFalse:
@@ -295,6 +298,8 @@ func (t TokenType) IntoPrefix() (operators.PrefixOperator, bool) {
 		return operators.Ptr, true
 	case TokenClone:
 		return operators.Clone, true
+	case TokenNew:
+		return operators.New, true
 	default:
 		return 0, false
 	}

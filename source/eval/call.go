@@ -5,6 +5,7 @@ import (
 
 	"github.com/aqua-aq/aqua-core/pkg/errors"
 	"github.com/aqua-aq/aqua-core/pkg/pos"
+	"github.com/aqua-aq/aqua-core/pkg/scope"
 	"github.com/aqua-aq/aqua-core/pkg/stacktrace"
 	"github.com/aqua-aq/aqua-core/source/keywords"
 	"github.com/aqua-aq/aqua-core/source/object"
@@ -12,7 +13,7 @@ import (
 	"github.com/aqua-aq/aqua-core/source/vm"
 )
 
-func Call(vm *vm.VM[*object.Value], sub *object.Value, args []*object.Value, clone bool, pos pos.Pos, export map[string]*object.Value) object.ExpressionResult {
+func Call(vm *vm.VM[*object.Value], sub *object.Value, args []*object.Value, clone bool, pos pos.Pos, export map[string]*object.Value, new bool) object.ExpressionResult {
 	if AttrExists(sub, keywords.Call) {
 		method := GetAttrMethod(sub, keywords.Call, pos)
 		if method.Signal.Has() {
@@ -58,7 +59,7 @@ func Call(vm *vm.VM[*object.Value], sub *object.Value, args []*object.Value, clo
 		}
 	}
 	res.Trace = res.Trace.Add(method.Subroutine.Name, pos)
-	if res.SignalVal.Normalize().IsNull() {
+	if res.SignalVal.Normalize().IsNull() && new && !bool(res.Signal) {
 		return object.ExpressionResult{Signal: res.Signal.IntoSignal(), SignalVal: method.It, Trace: res.Trace}
 	}
 	return res.AsExpressionResult()
@@ -89,4 +90,36 @@ func Bind(sub, it *object.Value, pos pos.Pos) object.ExpressionResult {
 			}),
 		}
 	}
+}
+
+func (c CallExpression) EvalCanBeNew(vm *vm.VM[*object.Value], scope scope.Scope[string, *object.Value], clone, new bool) object.ExpressionResult {
+	sub := IntoEval(c.Subroutine).Eval(vm, scope, false)
+	if sub.Signal.Has() {
+		return sub
+	}
+	args := make([]*object.Value, 0, len(c.Args))
+	for _, val := range c.Args {
+		res := IntoEval(val.Value).Eval(vm, scope, true)
+		if res.Signal.Has() {
+			return Clone(clone, vm, res, c.Pos)
+		}
+		if val.IsContinuos {
+
+			inner, ok := res.SignalVal.InnerValue().(object.Array)
+			if !ok {
+				return object.ExpressionResult{Trace: stacktrace.New(val.Pos),
+					Signal: signal.SignalRaise,
+					SignalVal: object.New(object.Error{
+						Code:    errors.TypeError,
+						Message: fmt.Sprintf("expected array, got %v", res.SignalVal.Normalize().Type()),
+					}),
+				}
+			}
+			args = append(args, inner.Elements...)
+		} else {
+			args = append(args, res.SignalVal.Normalize())
+
+		}
+	}
+	return Call(vm, sub.SignalVal, args, clone, c.Pos, nil, new)
 }
