@@ -53,7 +53,7 @@ func RunBin(
 			return Clone(
 				clone,
 				vm,
-				Call(vm, expr.SignalVal, []*object.Value{left.Normalize()}, clone, pos, nil),
+				Call(vm, expr.SignalVal, []*object.Value{left.Normalize()}, clone, pos, nil, false),
 				pos,
 			)
 		}
@@ -71,7 +71,7 @@ func RunBin(
 			return Clone(
 				clone,
 				vm,
-				Call(vm, expr.SignalVal, []*object.Value{left.Normalize()}, clone, pos, nil),
+				Call(vm, expr.SignalVal, []*object.Value{left.Normalize()}, clone, pos, nil, false),
 				pos,
 			)
 		}
@@ -103,7 +103,7 @@ func RunBin(
 		return Clone(
 			clone,
 			vm,
-			Call(vm, expr.SignalVal, []*object.Value{right.Normalize()}, clone, pos, nil),
+			Call(vm, expr.SignalVal, []*object.Value{right.Normalize()}, clone, pos, nil, false),
 			pos,
 		)
 	}

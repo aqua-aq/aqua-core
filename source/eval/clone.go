@@ -22,7 +22,7 @@ func Clone(clone bool, vm *vm.VM[*object.Value], expr object.ExpressionResult, p
 	if method.Signal.Has() {
 		return method
 	}
-	res := Call(vm, method.SignalVal.Normalize(), nil, false, pos, nil)
+	res := Call(vm, method.SignalVal.Normalize(), nil, false, pos, nil, false)
 	if res.Signal.Has() {
 		return res
 	}

@@ -9,7 +9,6 @@ import (
 
 type Expression interface {
 	expression()
-	// String() string
 }
 
 type (
@@ -82,11 +81,9 @@ type (
 		Args       []ArrayElement
 		Pos        pos.Pos
 	}
-
 	LetExpression struct {
 		IdentExpression
 	}
-
 	CatchBlock struct {
 		Name        IdentExpression
 		Expressions BlockExpression

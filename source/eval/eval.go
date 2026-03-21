@@ -128,7 +128,7 @@ func (s SliceExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[string
 			}
 			end = res.SignalVal.Normalize()
 		}
-		return Call(vm, m.SignalVal.Normalize(), []*object.Value{start, end}, clone, s.Pos, nil)
+		return Call(vm, m.SignalVal.Normalize(), []*object.Value{start, end}, clone, s.Pos, nil, false)
 	}
 	if arr, ok := left.SignalVal.Normalize().InnerValue().(object.Array); ok {
 		start := 0
@@ -219,7 +219,7 @@ func (s SwitchExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[strin
 		}
 		var ok bool
 		if method != nil {
-			res := Call(vm, method, []*object.Value{v.SignalVal.Normalize()}, false, s.Pos, nil)
+			res := Call(vm, method, []*object.Value{v.SignalVal.Normalize()}, false, s.Pos, nil, false)
 			if res.Signal.Has() {
 				return Clone(clone, vm, res, s.Pos)
 			}
@@ -255,7 +255,7 @@ func (u UsingExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[string
 		if method.Signal.Has() {
 			return method
 		}
-		expr = Call(vm, method.SignalVal.Normalize(), []*object.Value{}, false, u.Pos, nil)
+		expr = Call(vm, method.SignalVal.Normalize(), []*object.Value{}, false, u.Pos, nil, false)
 		if expr.Signal.Has() {
 			return expr
 		}
@@ -323,7 +323,7 @@ func (m ModExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[string, 
 	for _, v := range m.Export {
 		export[v] = object.New(object.Null{})
 	}
-	expr = Call(vm, expr.SignalVal.Normalize(), []*object.Value{}, clone, m.Pos, export)
+	expr = Call(vm, expr.SignalVal.Normalize(), []*object.Value{}, clone, m.Pos, export, false)
 	if expr.Signal.Has() {
 		return expr
 	}
@@ -369,7 +369,6 @@ func (a AssigmentExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[st
 			}
 			if len(arr.Elements) > i {
 				*expr.SignalVal.Normalize() = *arr.Elements[i]
-
 			}
 		}
 	} else if _, ok := right.SignalVal.Normalize().InnerValue().(object.Object); ok {
@@ -435,35 +434,7 @@ func (i IdentExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[string
 }
 
 func (c CallExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[string, *object.Value], clone bool) object.ExpressionResult {
-	sub := IntoEval(c.Subroutine).Eval(vm, scope, false)
-	if sub.Signal.Has() {
-		return sub
-	}
-	args := make([]*object.Value, 0, len(c.Args))
-	for _, val := range c.Args {
-		res := IntoEval(val.Value).Eval(vm, scope, true)
-		if res.Signal.Has() {
-			return Clone(clone, vm, res, c.Pos)
-		}
-		if val.IsContinuos {
-
-			inner, ok := res.SignalVal.InnerValue().(object.Array)
-			if !ok {
-				return object.ExpressionResult{Trace: stacktrace.New(val.Pos),
-					Signal: signal.SignalRaise,
-					SignalVal: object.New(object.Error{
-						Code:    errors.TypeError,
-						Message: fmt.Sprintf("expected array, got %v", res.SignalVal.Normalize().Type()),
-					}),
-				}
-			}
-			args = append(args, inner.Elements...)
-		} else {
-			args = append(args, res.SignalVal.Normalize())
-
-		}
-	}
-	return Call(vm, sub.SignalVal, args, clone, c.Pos, nil)
+	return c.EvalCanBeNew(vm, scope, clone, false)
 }
 
 func (e ErrorDec) Eval(vm *vm.VM[*object.Value], scope scope.Scope[string, *object.Value], clone bool) object.ExpressionResult {
@@ -622,7 +593,7 @@ func (f ForExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[string, 
 		}
 	case object.Method, *object.Subroutine:
 		for {
-			expr = Call(vm, iter.SignalVal.Normalize(), nil, false, f.Pos, nil)
+			expr = Call(vm, iter.SignalVal.Normalize(), nil, false, f.Pos, nil, false)
 			if err, ok := expr.SignalVal.Normalize().InnerValue().(object.Error); ok && expr.Signal == signal.SignalRaise && err.Code == errors.IteratorStop {
 				break
 			}
@@ -720,6 +691,10 @@ func (i IfExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[string, *
 }
 
 func (p PrefixExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[string, *object.Value], clone bool) object.ExpressionResult {
+	if call, ok := p.Value.(ast.CallExpression); ok && p.Operator == operators.New {
+		return CallExpression(call).EvalCanBeNew(vm, scope, clone, true)
+	}
+
 	expr := IntoEval(p.Value).Eval(vm, scope, false)
 	if expr.Signal.Has() {
 		return Clone(clone, vm, expr, p.Pos)
@@ -731,6 +706,7 @@ func (p PrefixExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[strin
 			Message: fmt.Sprintf("unsupported type: %s for prefix operator '%s'", expr.SignalVal.Normalize().Type(), p.Operator.String()),
 		}),
 	}
+
 	if p.Operator == operators.Ptr {
 		return object.ExpressionResult{Trace: stacktrace.New(p.Pos), SignalVal: expr.SignalVal.Normalize()}
 	}
@@ -754,6 +730,7 @@ func (p PrefixExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[strin
 			return Clone(clone, vm, expr, p.Pos)
 		case operators.Dec:
 			expr.SignalVal.Normalize().Set(object.Number{Value: val.Value - 1})
+			fmt.Println()
 			return Clone(clone, vm, expr, p.Pos)
 		case operators.Not:
 			if float64(int(val.Value)) == val.Value {
@@ -774,7 +751,7 @@ func (p PrefixExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[strin
 				return object.ExpressionResult{Trace: stacktrace.New(p.Pos)}
 			}
 			last := val.Elements[len(val.Elements)-1]
-			*expr.SignalVal.Normalize() = *object.New(object.Array{Elements: val.Elements[:len(val.Elements)-1]})
+			expr.SignalVal.Normalize().Set(object.Array{Elements: val.Elements[:len(val.Elements)-1]})
 			return Clone(
 				clone,
 				vm,
@@ -792,7 +769,7 @@ func (p PrefixExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[strin
 				return object.ExpressionResult{Trace: stacktrace.New(p.Pos)}
 			}
 			last := runes[len(runes)-1]
-			*expr.SignalVal.Normalize() = *object.New(object.String{Value: string(runes[:len(runes)-1])})
+			expr.SignalVal.Normalize().Set(object.String{Value: string(runes[:len(runes)-1])})
 			return object.ExpressionResult{Trace: stacktrace.New(p.Pos), SignalVal: object.New(object.String{Value: string(last)})}
 		}
 		return typeRaise
@@ -801,7 +778,7 @@ func (p PrefixExpression) Eval(vm *vm.VM[*object.Value], scope scope.Scope[strin
 		if method.Signal.Has() {
 			return Clone(clone, vm, method, p.Pos)
 		}
-		return Call(vm, method.SignalVal.Normalize(), nil, clone, p.Pos, nil)
+		return Call(vm, method.SignalVal.Normalize(), nil, clone, p.Pos, nil, false)
 	default:
 		return typeRaise
 	}

@@ -90,6 +90,20 @@ func (s Scope[K, V]) Delete(key K) bool {
 	return false
 }
 
+func (s Scope[K, V]) All() map[K]V {
+	if s.current == nil {
+		return nil
+	}
+
+	result := make(map[K]V, len(s.current.pointers))
+
+	for k, frame := range s.current.pointers {
+		result[k] = frame.values[k]
+	}
+
+	return result
+}
+
 func (s Scope[K, V]) Clear() {
 	clear(s.current.values)
 	clear(s.current.pointers)

@@ -70,7 +70,7 @@ func Run(path, name string, vm *vm.VM[*object.Value]) (map[string]*object.Value,
 	for _, v := range export {
 		vals[v] = object.New(object.Null{})
 	}
-	call := eval.Call(vm, sub.SignalVal.Normalize(), []*object.Value{}, false, pos, vals)
+	call := eval.Call(vm, sub.SignalVal.Normalize(), []*object.Value{}, false, pos, vals, false)
 	if call.Signal.Has() {
 		return nil, call
 	}

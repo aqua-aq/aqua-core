@@ -80,6 +80,7 @@ func (l *Lexer) InitKeywords() {
 	l.KeyWords["in"] = tokens.TokenIn
 	l.KeyWords["not"] = tokens.TokenNot
 	l.KeyWords["typeof"] = tokens.TokenTypeof
+	l.KeyWords["new"] = tokens.TokenNew
 	l.KeyWords["true"] = tokens.TokenTrue
 	l.KeyWords["false"] = tokens.TokenFalse
 	l.KeyWords["null"] = tokens.TokenNull

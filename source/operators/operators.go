@@ -169,6 +169,7 @@ const (
 	Inc
 	Dec
 	Typeof
+	New
 )
 
 func (o PrefixOperator) String() string {
@@ -187,6 +188,8 @@ func (o PrefixOperator) String() string {
 		return "--"
 	case Typeof:
 		return "typeof"
+	case New:
+		return "new"
 	default:
 		return "unknown"
 	}
@@ -201,6 +204,8 @@ func (o PrefixOperator) Method() string {
 		return keywords.Inc
 	case Dec:
 		return keywords.Dec
+	case New:
+		return keywords.New
 	default:
 		return ""
 	}

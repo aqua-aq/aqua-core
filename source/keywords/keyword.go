@@ -18,6 +18,7 @@ const (
 	Not = "__not__"
 	Dec = "__dec__"
 	Inc = "__inc__"
+	New = "__new__"
 
 	Add   = "__add__"
 	Sub   = "__sub__"

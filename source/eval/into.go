@@ -34,7 +34,7 @@ func IntoBool(vm *vm.VM[*object.Value], val *object.Value, pos pos.Pos) (bool, o
 		if method.Signal.Has() {
 			return false, method
 		}
-		res := Call(vm, method.SignalVal.Normalize(), nil, false, pos, nil)
+		res := Call(vm, method.SignalVal.Normalize(), nil, false, pos, nil, false)
 		if res.Signal.Has() {
 			return false, res
 		}
@@ -55,7 +55,7 @@ func IntoIter(val *object.Value, vm *vm.VM[*object.Value], pos pos.Pos) object.E
 	if method.Signal.Has() {
 		return method
 	}
-	return Call(vm, method.SignalVal.Normalize(), nil, false, pos, nil)
+	return Call(vm, method.SignalVal.Normalize(), nil, false, pos, nil, false)
 }
 func IntoString(vm *vm.VM[*object.Value], val *object.Value, pos pos.Pos) (string, object.ExpressionResult) {
 	if !AttrExists(val.Normalize(), keywords.Display) {
@@ -65,7 +65,7 @@ func IntoString(vm *vm.VM[*object.Value], val *object.Value, pos pos.Pos) (strin
 	if method.Signal.Has() {
 		return "", method
 	}
-	res := Call(vm, method.SignalVal.Normalize(), nil, false, pos, nil)
+	res := Call(vm, method.SignalVal.Normalize(), nil, false, pos, nil, false)
 	if res.Signal.Has() {
 		return "", res
 	}
@@ -101,7 +101,7 @@ func IntoNum(vm *vm.VM[*object.Value], val *object.Value, pos pos.Pos) (float64,
 		if method.Signal.Has() {
 			return 0, method
 		}
-		res := Call(vm, method.SignalVal.Normalize(), nil, false, pos, nil)
+		res := Call(vm, method.SignalVal.Normalize(), nil, false, pos, nil, false)
 		if res.Signal.Has() {
 			return 0, res
 		}

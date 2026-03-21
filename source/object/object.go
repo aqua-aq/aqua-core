@@ -182,6 +182,7 @@ func (v *Value) stringify(visited scope.Scope[uuid.UUID, struct{}]) string {
 	if visited.Has(v.uuid) {
 		return "<cycle>"
 	}
+	visited.Set(v.uuid, struct{}{})
 	switch inner := v.innerValue.(type) {
 	case String:
 		return inner.Value
