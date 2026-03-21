@@ -4,6 +4,9 @@ on:
   release:
     types: [created]
 
+permissions:
+  contents: write  
+
 jobs:
   build-and-upload:
     runs-on: ubuntu-latest
@@ -14,6 +17,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
       - name: Set version
         run: |
           VERSION=${GITHUB_REF#refs/tags/}
@@ -38,10 +42,9 @@ jobs:
           zip -r ../aqua-${{ matrix.os }}-${{ matrix.arch }}.zip ./${{ matrix.os }}-${{ matrix.arch }}
           cd ..
 
-      # 6. Upload to release
       - name: Upload release asset
         uses: softprops/action-gh-release@v2
         with:
           files: aqua-${{ matrix.os }}-${{ matrix.arch }}.zip
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_PAT }} 
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}  
